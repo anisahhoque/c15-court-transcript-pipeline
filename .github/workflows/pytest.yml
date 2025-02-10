@@ -1,0 +1,55 @@
+name: Run Pytest with Coverage Check
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Cache Python dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install PostgreSQL and system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql postgresql-contrib libpq-dev
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pytest pytest-cov
+
+      - name: Check if tests exist
+        id: check_tests
+        run: |
+          # Check if there are any test files
+          TEST_FILES=$(find . -name "test_*.py")
+          
+          if [ -z "$TEST_FILES" ]; then
+            echo "No test files found, skipping coverage check."
+            echo "run_tests=false" >> $GITHUB_ENV
+          else
+            echo "Test files found, running coverage check."
+            echo "run_tests=true" >> $GITHUB_ENV
+          fi
+
+      - name: Run Pytest with Coverage Check
+        if: env.run_tests == 'true'
+        run: |
+          python -m pytest --cov=./ --cov-config=.coveragerc --cov-fail-under=80
