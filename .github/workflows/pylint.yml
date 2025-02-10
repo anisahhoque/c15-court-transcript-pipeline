@@ -1,0 +1,36 @@
+name: Python Code Quality Check
+on: [push, workflow_dispatch, pull_request]
+jobs:
+  pylint:
+    runs-on: ubunt-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+    
+      - name: Cache python dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: ${{ runner.os }}-pip-
+      
+      - name: "Install requirements"
+        run: |
+          find . -name "requirements.txt" -exec pip3 install -r {} \;
+      
+      - name: "Lint Python Files"
+        run: |
+          FILES=$(git ls-files '*.py' | grep -Ev 'test.*\.py' || true)
+          if [ -z "$FILES" ]; then
+            echo "No Python files to lint"
+          else
+            pylint $FILES --fail-under=9
+          fi
+
+

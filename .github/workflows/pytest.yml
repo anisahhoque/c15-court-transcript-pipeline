@@ -22,8 +22,8 @@ jobs:
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-s${{ hashFiles('requirements.txt') }}
-          restore-keys:
-          ${{ runner.os }}-pip-
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
       - name: Install PostgreSQL and system dependencies
         run: |
