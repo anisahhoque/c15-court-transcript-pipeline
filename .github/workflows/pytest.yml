@@ -38,12 +38,15 @@ jobs:
       - name: Check if tests exist
         id: check_tests
         run: |
-          if ! python -m pytest --collect-only | grep -q "collected 0 items."; then
-            echo "Tests found, running coverage check."
-            echo "run_tests=true" >> $GITHUB_ENV
-          else
-            echo "No tests found, skipping coverage check."
+          # Check if there are any test files
+          TEST_FILES=$(find . -name "test_*.py" -o -name "*_test.py")
+          
+          if [ -z "$TEST_FILES" ]; then
+            echo "No test files found, skipping coverage check."
             echo "run_tests=false" >> $GITHUB_ENV
+          else
+            echo "Test files found, running coverage check."
+            echo "run_tests=true" >> $GITHUB_ENV
           fi
 
       - name: Run Pytest with Coverage Check
