@@ -15,13 +15,13 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: '3.13'
 
       - name: Cache Python dependencies
         uses: actions/cache@v3
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-s${{ hashFiles('requirements.txt') }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
 
@@ -35,11 +35,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt pytest-cov
 
-      - name: Run Pytest with Coverage Check
+      - name: Check if tests exist
+        id: check_tests
         run: |
-          if python -m pytest --collect-only | grep -q "collected 0 items."; then echo "No tests collected, skipping coverage check."
-
+          if python -m pytest --collect-only | grep -q "collected 0 items."; then
+            echo "No tests collected, skipping coverage check."
+            echo "skip_tests=true" >> $GITHUB_ENV
           else
-              python -m pytest --cov=./ --cov-config=.coveragerc --cov-fail-under=80
-
+            echo "skip_tests=false" >> $GITHUB_ENV
           fi
+
+      - name: Run Pytest with Coverage Check
+        if: env.skip_tests == 'false'
+        run: |
+          python -m pytest --cov=./ --cov-config=.coveragerc --cov-fail-under=80
