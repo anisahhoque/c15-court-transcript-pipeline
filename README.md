@@ -10,7 +10,7 @@ This project automates the enhancement, discoverability, and analysis of court t
 - API Key for GPT-4
 - Python 3.13
 - AWS Account - for deploying cloud resources
-- Terraform - for tearing up and destroying cloud infrastructure
+- Terraform - for setting up and tearing down cloud infrastructure
 
 ### Set Up Instructions
 - `git clone https://github.com/anisahhoque/c15-court-transcript-pipeline.git`
