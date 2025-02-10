@@ -2,7 +2,7 @@ name: Python Code Quality Check
 on: [push, workflow_dispatch, pull_request]
 jobs:
   pylint:
-    runs-on: ubunt-latest
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout

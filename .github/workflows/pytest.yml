@@ -39,7 +39,7 @@ jobs:
         id: check_tests
         run: |
           # Check if there are any test files
-          TEST_FILES=$(find . -name "test_*.py" -o -name "*_test.py")
+          TEST_FILES=$(find . -name "test_*.py")
           
           if [ -z "$TEST_FILES" ]; then
             echo "No test files found, skipping coverage check."
