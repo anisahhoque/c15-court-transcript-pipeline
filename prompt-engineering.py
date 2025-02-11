@@ -1,8 +1,10 @@
-from openai import OpenAI
-from dotenv import load_dotenv
-from pydantic import BaseModel
+"""This file extracts data from xmls using OpenAI API"""
 import json
 from os import environ as ENV
+from dotenv import load_dotenv
+from openai import OpenAI
+from pydantic import BaseModel
+
 
 
 class Party(BaseModel):
@@ -24,11 +26,54 @@ class CaseOutput(BaseModel):
     court_name: str
     court_address: str
     case_number: int
-    
-
 class LawOutput(BaseModel):
     case_summary: list[CaseOutput]
+def print_case_details(case_data: dict):
+    """
+    Formats and prints case data in a clean, readable format
+    Args:
+        case_data: Dictionary containing the case information
+    """
+    print("\n" + "="*50)
+    print(f"CASE #{case_data['case_number']}")
+    print("="*50 + "\n")
 
+    # Court Information
+    print("COURT DETAILS")
+    print("-"*30)
+    print(f"Court: {case_data['court_name']}")
+    print(f"Address: {case_data['court_address']}")
+
+
+
+    print("CASE OVERVIEW")
+    print("-"*30)
+    print(f"Citation: {case_data['neutral_citation']}\n")
+    print(f"Type of Crime: {case_data['type_of_crime']}")
+    print(f"Description: {case_data['description']}\n")
+
+
+    print("PARTIES INVOLVED")
+    print("-"*30)
+    for party in case_data['parties']:
+        print(f"Name: {party['party_name']}")
+        print(f"Role: {party['party_role']}")
+        print()
+
+
+    print("JUDGES")
+    print("-"*30)
+    for judge in case_data['judge']:
+        print(f"Name: {judge['judge_name']}")
+        print(f"Title: {judge['judge_title']}")
+        print(f"Jurisdiction: {judge['jurisdiction_name']}")
+        print()
+
+    print("RELEVANT LEGISLATION")
+    print("-"*30)
+    for legislation in case_data['legislations']:
+        print(f"- {legislation['legislation_name']}")
+    print()
 if __name__=="__main__":
 
     load_dotenv()
@@ -78,4 +123,5 @@ if __name__=="__main__":
     )
     response.choices
     response_choices = response.choices[0].message
-    print(json.loads(response_choices.content).get("case_summary"))
+    for i in json.loads(response_choices.content).get("case_summary"):
+        print(print_case_details(i))
