@@ -1,5 +1,6 @@
 name: Python Code Quality Check
 on: [push, workflow_dispatch, pull_request]
+
 jobs:
   pylint:
     runs-on: ubuntu-latest
@@ -7,30 +8,40 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Ensure full repo is checked out
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.13'
     
-      - name: Cache python dependencies
+      - name: Cache Python Dependencies
         uses: actions/cache@v3
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
           restore-keys: ${{ runner.os }}-pip-
       
-      - name: "Install requirements"
+      - name: Install Requirements
         run: |
           find . -name "requirements.txt" -exec pip3 install -r {} \;
-      
-      - name: "Lint Python Files"
+          pip install pylint  # Ensure pylint is installed
+
+      - name: Check for Python Files
+        id: check_files
         run: |
-          FILES=$(git ls-files '*.py' | grep -Ev 'test.*\.py' || true)
+          FILES=$(find . -type f -name "*.py" ! -name "test_*.py")
           if [ -z "$FILES" ]; then
-            echo "No Python files to lint"
+            echo "No Python files found. Skipping lint step."
+            echo "skip=true" >> $GITHUB_ENV
           else
-            pylint $FILES --fail-under=9
+            echo "Python files found."
+            echo "skip=false" >> $GITHUB_ENV
           fi
 
-
+      - name: Lint Python Files
+        if: env.skip == 'false'  # Only run if Python files exist
+        run: |
+          FILES=$(find . -type f -name "*.py" ! -name "test_*.py")
+          pylint $FILES --fail-under=9
