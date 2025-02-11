@@ -9,7 +9,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Ensure full repo is checked out
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -41,7 +41,7 @@ jobs:
           fi
 
       - name: Lint Python Files
-        if: env.skip == 'false'  # Only run if Python files exist
+        if: env.skip == 'false'
         run: |
           FILES=$(find . -type f -name "*.py" ! -name "test_*.py")
           pylint $FILES --fail-under=9
