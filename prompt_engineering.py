@@ -23,7 +23,6 @@ class Party(BaseModel):
 class Judge(BaseModel):
     """Represents a judge involved in a legal case."""
     judge_name: str
-    jurisdiction_name: str
     judge_title: str
 
 class Legislation(BaseModel):
@@ -34,6 +33,12 @@ class Judgement(BaseModel):
     """Reference/unique id for a judgement"""
     neutral_citation: str
 
+class Argument(BaseModel):
+    judgement_reference: str
+    summary: str
+    judgements_referenced: list[Judgement]
+    legistlations_referenced: list[Legislation]
+    
 class CaseOutput(BaseModel):
     """All details to be extracted from the xmls"""
     date: str
@@ -48,6 +53,7 @@ class CaseOutput(BaseModel):
     court_address: str
     case_number: str
     referenced_judgements: list[Judgement]
+    arguments: list[Argument]
 
 class LawOutput(BaseModel):
     """Returns all information in a case summary"""
@@ -90,7 +96,6 @@ def print_case_details(case_data: dict) -> None:
     for judge in case_data['judge']:
         print(f"Name: {judge['judge_name']}")
         print(f"Title: {judge['judge_title']}")
-        print(f"Jurisdiction: {judge['jurisdiction_name']}")
         print()
 
     print("RELEVANT LEGISLATION")
@@ -164,7 +169,7 @@ if __name__=="__main__":
     - type_of_crime: criminal or civil 
     - description: a short summary of the trial
     - parties : a list of party dictionaries with their names and what role they are -  apellant, defendant, claimant, Also for each party they have some counsels - example William Bennett KC and Ben Hamer (instructed by Brett Wilson LLP) for Dale Vince OBE - William Bennett is a counsel name, KC = Kings Counsel which is a counsel title, Ben Hammer is another Counsel name with no title, Brett Wilson LLP is a chamber name
-    - judge : the surname of the judge (e.g., 'Pepperall' or 'Bright', followed by their title (e.g., 'Mr Justice'), their jurisdiction from the following England and Wales, Nothern Ireland, Scotland
+    - judge : the surname of the judge (e.g., 'Pepperall' or 'Bright', followed by their title (e.g., 'Mr Justice')
     - legislations: a list of the legislation names
     - neutral_citation: the neutral citation number
     - court_name: name of court
