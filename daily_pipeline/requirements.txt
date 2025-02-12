@@ -1,0 +1,9 @@
+beautifulsoup4
+lxml
+requests
+boto3
+python-dotenv
+pytest
+pytest-mock
+pytest-cov
+pylint

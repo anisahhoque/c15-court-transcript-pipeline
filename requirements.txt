@@ -1,6 +1,7 @@
 # Requirements for c15-court-transcript-pipeline
 pytest
 pylint
+pytest-mock
 pytest-cov
 requests
 pandas
@@ -9,3 +10,6 @@ pyarrow
 boto3
 moto
 psycopg2
+openai
+beautifulsoup4
+lxml
