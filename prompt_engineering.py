@@ -35,6 +35,7 @@ class Judgement(BaseModel):
 
 class CaseOutput(BaseModel):
     """All details to be extracted from the xmls"""
+    date: str
     type_of_crime: str
     description: str
     parties: list[Party]
@@ -45,13 +46,12 @@ class CaseOutput(BaseModel):
     court_address: str
     case_number: str
     referenced_judgements: list[Judgement]
-    
 
 class LawOutput(BaseModel):
     """Returns all information in a case summary"""
     case_summary: list[CaseOutput]
 
-def print_case_details(case_data: dict):
+def print_case_details(case_data: dict) -> None:
     """
     Formats and prints case data in a clean, readable format
     Args:
@@ -59,6 +59,7 @@ def print_case_details(case_data: dict):
     """
     print("\n" + "="*50)
     print(f"CASE #{case_data['case_number']}")
+    print(f"DATE {case_data['date']}")
     print("="*50 + "\n")
 
     print("COURT DETAILS")
@@ -79,12 +80,10 @@ def print_case_details(case_data: dict):
         print(f"Role: {party['party_role']}")
         for counsel in party['counsels']:
             print(f"Counsel Name: {counsel['counsel_name']}")
-            print(f"Counsel Title: {counsel['counsel_title']}")  
+            print(f"Counsel Title: {counsel['counsel_title']}")
             print(f"Chamber Name: {counsel['chamber_name']}")
         print()
     print()
-
-
 
     print("JUDGES")
     print("-"*30)
@@ -106,6 +105,7 @@ def print_case_details(case_data: dict):
         print(f"- {judgement['neutral_citation']}")
 
 def get_client() -> OpenAI:
+    """Returns a client for the API"""
     client = OpenAI(
     api_key=ENV.get("OPENAI_API_KEY"),
     timeout=10.0,
@@ -114,15 +114,16 @@ def get_client() -> OpenAI:
 
 
 def get_list_xml_data(filenames: list[str]) -> list[str]:
-    list_of_cases = []
+    """Reads xmls and returns a list of strings with the xml data"""
+    cases = []
     for file in filenames:
-        with open(file, 'r') as file:
-            list_of_cases.append(file.read())
+        with open(file, 'r', encoding='UTF-8') as file:
+            cases.append(file.read())
 
-    return list_of_cases
+    return cases
 
-def get_case_summaries(model: str, client: OpenAI, prompt: str):
-
+def get_case_summaries(model: str, client: OpenAI, prompt: str) -> list[dict]:
+    """Returns a list of dictionaries for each xml with the relevant data"""
     response = client.with_options(timeout=60.0).beta.chat.completions.parse(
     messages=[
         {
@@ -133,29 +134,31 @@ def get_case_summaries(model: str, client: OpenAI, prompt: str):
     model=model,
     response_format=LawOutput,
     )
-    response.choices
     response_choices = response.choices[0].message
+
     for i in json.loads(response_choices.content).get("case_summary"):
-        print(print_case_details(i)) 
+        print(print_case_details(i))
+
+    return json.loads(response_choices.content).get("case_summary")
 
 if __name__=="__main__":
-    client = get_client()
-    gpt_model = "o3-mini"
+    api_client = get_client()
+    GPT_MODEL = "o3-mini"
     file_names = ['ewhc_kb_2025_287.xml','ewhc_comm_2025_240.xml']
     list_of_cases = get_list_xml_data(filenames=file_names)
 
 
-    prompt = f"""
+    PROMPT = f"""
     I have a list of court case transcriptions:
     {list_of_cases}
 
     Please analyse each case and return a summary for each.
 
     Give me a summary for each of the cases provided. Your response should be in a list of dictionaries containing the following keys:
-   
+    - datetime: date of the approved judgement
     - type_of_crime: criminal or civil 
     - description: a short summary of the trial
-    - parties : a list of party dictionaries with their names and what role they are apellant, defendant, claimant, Also for example William Bennett KC and Ben Hamer (instructed by Brett Wilson LLP) for Dale Vince OBE - William Bennett is a counsel name, KC = Kings Counsel which is a counsel title, Ben Hammer is another Counsel name with no title, Brett Wilson LLP is a chamber name
+    - parties : a list of party dictionaries with their names and what role they are -  apellant, defendant, claimant, Also for each party they have some counsels - example William Bennett KC and Ben Hamer (instructed by Brett Wilson LLP) for Dale Vince OBE - William Bennett is a counsel name, KC = Kings Counsel which is a counsel title, Ben Hammer is another Counsel name with no title, Brett Wilson LLP is a chamber name
     - judge : the surname of the judge (e.g., 'Pepperall' or 'Bright', followed by their title (e.g., 'Mr Justice'), their jurisdiction from the following England and Wales, Nothern Ireland, Scotland
     - legislations: a list of the legislation names
     - neutral_citation: the neutral citation number
@@ -171,4 +174,4 @@ if __name__=="__main__":
     """
 
 
-    get_case_summaries(model=gpt_model,client=client,prompt=prompt)
+    get_case_summaries(model=GPT_MODEL,client=api_client,prompt=PROMPT)
