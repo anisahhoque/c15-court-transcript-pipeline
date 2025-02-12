@@ -13,9 +13,61 @@ provider "aws" {
   secret_key = var.secret_key
 }
 
-resource "aws_vpc" "judgement_project" {}
+resource "aws_vpc" "judgement_project" {
+  cidr_block = "10.0.0.0/16"
+
+  tags = {
+    Name = "judgement-reader"
+  }
+}
 
 resource "aws_s3_bucket" "judgement_xml" {
-  bucket = "judgement_xml"
+  bucket = "judgement-xml"
   force_destroy = true
+}
+
+resource "aws_subnet" "private-a" {
+  vpc_id = aws_vpc.judgement_project.id 
+  cidr_block = "10.0.3.0/24"
+  availability_zone = "eu-west-2a"
+
+  tags = {
+    Name = "private-a"
+  }
+}
+
+resource "aws_subnet" "private-b" {
+  vpc_id = aws_vpc.judgement_project.id 
+  cidr_block = "10.0.4.0/24"
+  availability_zone = "eu-west-2b"
+
+  tags = {
+    Name = "private-b"
+  }
+}
+
+resource "aws_db_subnet_group" "default" {
+  name = "main"
+  subnet_ids = [
+    aws_subnet.private-a.id, 
+    aws_subnet.private-b.id
+  ]
+}
+
+resource "aws_db_instance" "main" {
+  allocated_storage = 20
+  engine = "postgres"
+  engine_version = "17"
+  identifier = "c15-judgement-reader"
+  instance_class = "db.t4g.micro"
+  storage_encrypted = false
+  publicly_accessible = false 
+  delete_automated_backups = true 
+  skip_final_snapshot = true 
+  db_name = var.db_name
+  username = var.db_user
+  password = var.db_password
+  apply_immediately = true 
+  multi_az = false
+  db_subnet_group_name = aws_db_subnet_group.default.name
 }
