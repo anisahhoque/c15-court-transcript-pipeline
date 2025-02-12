@@ -21,8 +21,7 @@ def get_judgements_from_atom_feed(url: str) -> list[str]:
         result = requests.get(url, timeout=30)
         result.raise_for_status()
     except requests.exceptions.RequestException as e:
-        error_msg = e
-        logging.error("Error requesting data from URL: %s", error_msg)
+        logging.error("Error requesting data from URL: %s", str(e))
         raise
     soup = BeautifulSoup(result.text, "xml")
     entries = soup.find_all("entry")
@@ -55,8 +54,7 @@ def create_client(aws_access_key_id: str, aws_secret_access_key: str) -> BaseCli
         logging.info("Successfully connected to s3.")
         return s_three_client
     except (NoCredentialsError, PartialCredentialsError) as e:
-        error_msg = e
-        logging.error("Credentials error: %s", error_msg)
+        logging.error("Credentials error: %s", str(e))
         raise
 
 
@@ -68,8 +66,7 @@ def upload_url_to_s3(s_three_client: BaseClient, url: str, bucket_name: str, s3_
         s_three_client.put_object(Bucket=bucket_name, Key=s3_key, Body=response.content)
         logging.info("File from '%s' uploaded successfully to '%s/%s'", url, bucket_name, s3_key)
     except requests.exceptions.RequestException as e:
-        error_msg = e
-        logging.error("Error downloading the file from URL: %s", error_msg)
+        logging.error("Error downloading the file from URL: %s", str(e))
         raise
 
 
@@ -84,8 +81,7 @@ def download_url(local_folder: str, url: str, file_name: str):
             file.write(response.content)
         logging.info("XML saved to %s/%s", local_folder, file_name)
     except requests.exceptions.RequestException as e:
-        error_msg = e
-        logging.error("Error downloading the file from URL: %s", error_msg)
+        logging.error("Error downloading the file from URL: %s", str(e))
         raise
 
 
