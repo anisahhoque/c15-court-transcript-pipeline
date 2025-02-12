@@ -174,3 +174,5 @@ cython_debug/
 # judgements folder
 judgements
 
+# sensitive terraform files
+**/*terraform**
