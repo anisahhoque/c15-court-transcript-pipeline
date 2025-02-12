@@ -26,16 +26,16 @@ class Judge(BaseModel):
     judge_title: str
 
 class Legislation(BaseModel):
-    """Represents legislations referenced in the judgement"""
+    """Represents legislations referenced in the judgment"""
     legislation_name: str
 
-class Judgement(BaseModel):
-    """Reference/unique id for a judgement"""
+class Judgment(BaseModel):
+    """Reference/unique id for a judgment"""
     neutral_citation: str
 
 class Argument(BaseModel):
     summary: str
-    judgements_referenced: list[Judgement]
+    judgments_referenced: list[Judgment]
     legislations_referenced: list[Legislation]
     
 class CaseOutput(BaseModel):
@@ -47,11 +47,11 @@ class CaseOutput(BaseModel):
     parties: list[Party]
     judge: list[Judge]
     legislations: list[Legislation]
-    neutral_citation: Judgement
+    neutral_citation: Judgment
     court_name: str
     court_address: str
     case_number: str
-    referenced_judgements: list[Judgement]
+    referenced_judgments: list[Judgment]
     arguments: list[Argument]
 
 class LawOutput(BaseModel):
@@ -64,7 +64,7 @@ def print_case_details(case_data: dict) -> None:
     """
     print("\n" + "="*50)
     print(f"CASE #{case_data['case_number']}")
-    print(f"JUDGEMENT DATE {case_data['date']}")
+    print(f"JUDGMENT DATE {case_data['date']}")
     print("="*50 + "\n")
 
     print("COURT DETAILS")
@@ -103,17 +103,17 @@ def print_case_details(case_data: dict) -> None:
         print(f"- {legislation['legislation_name']}")
     print()
 
-    print("REFERENCED JUDGEMENTS")
+    print("REFERENCED JUDGMENTS")
     print("-"*30)
-    for judgement in case_data['referenced_judgements']:
-        print(f"- {judgement['neutral_citation']}")
+    for judgment in case_data['referenced_judgments']:
+        print(f"- {judgment['neutral_citation']}")
 
     print("ARGUMENTS")
     print("-"*30)
     for argument in case_data['arguments']:
         print(f"Argument Summary: {argument['summary']}")
-        for judgement in argument['judgements_referenced']:
-            print(f"- {judgement['neutral_citation']}")
+        for judgment in argument['judgments_referenced']:
+            print(f"- {judgment['neutral_citation']}")
         for legislation in argument['legislations_referenced']:
             print(f"- {legislation['legislation_name']}")
 
@@ -173,7 +173,7 @@ if __name__=="__main__":
     Please analyse each case and return a summary for each.
 
     Give me a summary for each of the cases provided. Your response should be in a list of dictionaries containing the following keys:
-    - date: date of the approved judgement
+    - date: date of the approved judgment
     - hearing_dates: a list of dates for all hearings
     - type_of_crime: criminal or civil 
     - description: a short summary of the trial
@@ -184,8 +184,8 @@ if __name__=="__main__":
     - court_name: name of court
     - court_address: the courts address
     - case_number: the value of Case No
-    - referenced_judgements: the neutral citations that are referenced are references to other judgements
-    - arguments: list of arguments made in the judgement which contains neutral citations(references to other judgements), list of references to legislations and a summary of the argument
+    - referenced_judgments: the neutral citations that are referenced are references to other judgments
+    - arguments: list of arguments made in the judgment which contains neutral citations(references to other judgments), list of references to legislations and a summary of the argument
 
   
 
