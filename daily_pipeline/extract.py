@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 BASE_URL = "https://caselaw.nationalarchives.gov.uk/atom.xml?per_page=9999"
 
 
-def get_judgments_from_atom_feed(url: str) -> list[dict]:
+def get_judgments_from_atom_feed(url: str) -> list[dict[str, str]]:
     """Returns a list of dictionaries, each dictionary corresponding to a judgment.
     
     Each dictionary has a particular judgment's neutral citation number
