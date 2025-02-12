@@ -37,3 +37,74 @@ resource "aws_security_group" "pipeline" {
     }
   }
 }
+
+resource "aws_ecs_task_definition" "pipeline" {
+  family = "judgment-reader-pipeline"
+  requires_compatibilites = ["FARGATE"]
+  network_mode = "awsvpc"
+  cpu = 256
+  memory = 512
+  execution_role_arn = "arn:aws:iam::129033205317:role/ecsTaskExecutionRole"
+  container_definitions = jsonencode(
+    {
+      name = "judgment-reader-pipeline"
+      image = "${aws_ecr_repository.pipeline.repository_url}:latest"
+      cpu = 256 
+      memory = 512
+      essential = true 
+      environment = [
+        {
+          name = "DB_NAME"
+          value = var.db_name
+        },
+        {
+          name = "DB_USER"
+          value = var.db_user
+        },
+        {
+          name = "DB_PASSWORD"
+          value = var.db_password
+        },
+        {
+          name = "DB_HOST"
+          value = aws_db_instance.main.address
+        },
+        {
+          name = "DB_PORT"
+          value = aws_db_instance.main.port
+        },
+        {
+          name = "ACCESS_KEY"
+          value = var.access_key
+        },
+        {
+          name = "SECRET_KEY"
+          value = var.secret_key
+        },
+        {
+          name = "BUCKET_NAME"
+          value = aws_s3_bucket.judgment_xml.id
+        }
+      ]
+    portMappings = [
+        {
+          containerPort = 80
+          hostPort = 80
+        },
+        {
+          containerPort = 443
+          hostPort = 443
+        },
+        {
+          containerPort = aws_db_instance.main.port
+          hostPort = aws_db_instance.main.port
+        }
+      ]
+    }
+  )
+
+  runtime_platform {
+    operating_system_family = "LINUX"
+    cpu_architecture = "X86_64"
+  }
+}

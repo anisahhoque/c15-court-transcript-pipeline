@@ -23,6 +23,6 @@ variable "pipeline_sg_ports" {
   default = [
     80,
     443,
-    5432
+    aws_db_instance.main.port
   ]
 }
