@@ -114,7 +114,6 @@ def get_client() -> OpenAI:
         return client
     except OpenAIError as e:
         logging.error('Failed to return an OpenAI client - %s', str(e))
-        raise
 
 
 def get_list_xml_data(filenames: list[str]) -> list[str]:
@@ -147,7 +146,6 @@ def get_case_summaries(model: str, client: OpenAI, prompt: str) -> list[dict]:
 
     except OpenAIError as e:
         logging.error('An error occurred while trying to retrieve case information - %s', str(e))
-        raise
 
 if __name__=="__main__":
     api_client = get_client()
