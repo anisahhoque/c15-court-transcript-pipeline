@@ -45,6 +45,7 @@ htmlcov/
 .cache
 nosetests.xml
 coverage.xml
+coverage.json
 *.cover
 *.py,cover
 .hypothesis/
@@ -170,5 +171,13 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
+
 *.xml
 .DS_Store
+
+# sensitive terraform files
+**/*terraform**
+
+# judgements
+judgements
+
