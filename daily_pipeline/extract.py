@@ -41,8 +41,7 @@ def get_judgments_from_atom_feed(url: str) -> list[dict[str, str]]:
 
 
 def create_daily_atom_feed_url() -> str:
-    """Creates atom feed URL for previous day's judgments.
-    Returns the atom feed URL of the previous day's judgments as a string."""
+    """Returns the atom feed URL of the previous day's judgments as a string."""
     today = datetime.today() - timedelta(days = 1)
     day, month, year = today.day, today.month, today.year
 
