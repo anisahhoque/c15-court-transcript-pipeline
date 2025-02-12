@@ -17,12 +17,19 @@ resource "null_resource" "initialise_pipeline_ecr" {
   depends_on = [aws_ecr_repository.pipeline]
 }
 
+locals {
+  pipeline_sg_ports = concat(
+    var.http_ports,
+    [aws_db_instance.main.port]
+  )
+}
+
 resource "aws_security_group" "pipeline" {
   name = "judgment-reader-pipeline"
   vpc_id = aws_vpc.main.id
 
   dynamic "ingress" {
-    for_each = concat(var.pipeline_sg_ports, [aws_db_instance.main.port])
+    for_each = local.pipeline_sg_ports
 
     content {
       from_port = ingress.value 
@@ -32,7 +39,7 @@ resource "aws_security_group" "pipeline" {
   }
 
   dynamic "egress" {
-    for_each = concat(var.pipeline_sg_ports, [aws_db_instance.main.port])
+    for_each = local.pipeline_sg_ports
 
     content {
       from_port = egress.value 

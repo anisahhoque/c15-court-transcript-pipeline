@@ -18,7 +18,7 @@ variable "db_password" {
   type = string
 }
 
-variable "pipeline_sg_ports" {
+variable "http_ports" {
   type = list(number)
   default = [
     80,
