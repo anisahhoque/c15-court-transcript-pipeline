@@ -17,3 +17,12 @@ variable "db_user" {
 variable "db_password" {
   type = string
 }
+
+variable "pipeline_sg_ports" {
+  type = list(number)
+  default = [
+    80,
+    443,
+    5432
+  ]
+}
