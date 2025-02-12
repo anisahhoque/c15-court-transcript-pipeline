@@ -1,6 +1,7 @@
 """This file extracts data from xmls using OpenAI API"""
 import json
 import logging
+from lxml import etree
 from os import environ as ENV
 from dotenv import load_dotenv
 from openai import OpenAI, OpenAIError
@@ -57,6 +58,25 @@ class CaseOutput(BaseModel):
 class LawOutput(BaseModel):
     """Returns all information in a case summary"""
     case_summary: list[CaseOutput]
+
+
+def get_metadata(xml_filename: str) -> dict:
+    metadata = {
+        'court_name': '',
+        'court_address': '',
+        'case_number': '',
+        'neutral_citation': '',
+        'date': '',
+        'hearing_dates': [],
+        'judge': [],
+        'parties': []
+    }
+    tree = etree.parse(xml_filename)
+    root = tree.getroot()
+
+
+
+
 
 def print_case_details(case_data: dict) -> None:
     """
@@ -191,5 +211,6 @@ if __name__=="__main__":
 
     This MUST be a json and only be a list of dictionaries
     """
+    get_metadata(list_of_cases[0])
 
-    get_case_summaries(model=GPT_MODEL,client=api_client,prompt=PROMPT)
+    #get_case_summaries(model=GPT_MODEL,client=api_client,prompt=PROMPT)
