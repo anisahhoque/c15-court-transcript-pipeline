@@ -1,10 +1,11 @@
 """Tests for prompts"""
+import json
 from unittest.mock import patch, Mock, mock_open
+import pytest
 from openai import OpenAI
 from openai.types.chat import ChatCompletion, ChatCompletionMessage
-from prompt_engineering import get_client, get_list_xml_data, get_case_summaries, print_case_details
-import pytest
-import json
+from prompt_engineering import get_client, get_list_xml_data, get_case_summaries
+
 SAMPLE_XML_1 = """<?xml version="1.0" encoding="UTF-8"?>
 <judgment>
     <header>
@@ -119,21 +120,15 @@ SAMPLE_RESPONSE_DATA = {
 def mock_openai_client():
     """Fixture providing a mock OpenAI client"""
     mock_client = Mock(spec=OpenAI)
-    
-
     mock_message = Mock(spec=ChatCompletionMessage)
     mock_message.content = json.dumps(SAMPLE_RESPONSE_DATA)
-    
     mock_choice = Mock()
     mock_choice.message = mock_message
-    
     mock_response = Mock(spec=ChatCompletion)
     mock_response.choices = [mock_choice]
-    
-
     mock_client.with_options.return_value.beta.chat.completions.parse.return_value = mock_response
-    
     return mock_client
+
 def test_get_client_return_type():
     """Test that get_client returns an OpenAI instance"""
     with patch.dict('os.environ', {'OPENAI_API_KEY': 'test-key'}):
@@ -147,7 +142,6 @@ def test_get_list_xml_data_multiple_files():
         'test1.xml': SAMPLE_XML_1,
         'test2.xml': SAMPLE_XML_2
     }
-    
     def mock_open_files(filename, mode, encoding):
         return mock_open(read_data=mock_files[filename]).return_value
     
@@ -174,7 +168,6 @@ def test_get_case_summaries_successful_call(mock_openai_client):
 
     mock_openai_client.with_options.assert_called_once_with(timeout=60.0)
     mock_openai_client.with_options.return_value.beta.chat.completions.parse.assert_called_once()
-    
 
     assert isinstance(result, list)
     assert len(result) == 1
@@ -188,9 +181,9 @@ def test_get_case_summaries_data_structure(mock_openai_client):
         client=mock_openai_client,
         prompt="Test prompt"
     )
-    
+
     case = result[0]
- 
+
     assert all(key in case for key in [
         "date", "type_of_crime", "description", "parties",
         "judge", "legislations", "neutral_citation",
