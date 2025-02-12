@@ -50,8 +50,7 @@ def create_daily_atom_feed_url() -> str:
 
 
 def create_client(aws_access_key_id: str, aws_secret_access_key: str) -> BaseClient:
-    """Creates botcore s3 client with given access key and secret access key.
-    Returns a BaseClient object for s3 service."""
+    """Returns a BaseClient object for s3 service specified by the provided keys"""
     try:
         s_three_client = client("s3", aws_access_key_id=aws_access_key_id,
                      aws_secret_access_key=aws_secret_access_key)
