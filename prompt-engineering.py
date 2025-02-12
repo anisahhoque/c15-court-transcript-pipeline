@@ -5,17 +5,18 @@ from dotenv import load_dotenv
 from openai import OpenAI
 from pydantic import BaseModel
 
-
-
 class Party(BaseModel):
     party_name: str
     party_role: str
+
 class Judge(BaseModel):
     judge_name: str
     jurisdiction_name: str
     judge_title: str
+
 class Legislation(BaseModel):
     legislation_name: str
+
 class CaseOutput(BaseModel):
     type_of_crime: str
     description: str
@@ -25,9 +26,12 @@ class CaseOutput(BaseModel):
     neutral_citation: str
     court_name: str
     court_address: str
-    case_number: int
+    case_number: str
+    
+
 class LawOutput(BaseModel):
     case_summary: list[CaseOutput]
+
 def print_case_details(case_data: dict):
     """
     Formats and prints case data in a clean, readable format
@@ -38,20 +42,16 @@ def print_case_details(case_data: dict):
     print(f"CASE #{case_data['case_number']}")
     print("="*50 + "\n")
 
-    # Court Information
     print("COURT DETAILS")
     print("-"*30)
     print(f"Court: {case_data['court_name']}")
     print(f"Address: {case_data['court_address']}")
-
-
 
     print("CASE OVERVIEW")
     print("-"*30)
     print(f"Citation: {case_data['neutral_citation']}\n")
     print(f"Type of Crime: {case_data['type_of_crime']}")
     print(f"Description: {case_data['description']}\n")
-
 
     print("PARTIES INVOLVED")
     print("-"*30)
@@ -95,15 +95,14 @@ if __name__=="__main__":
     - type_of_crime: criminal or civil 
     - description: a short summary of the trial
     - parties : a list of party dictionaries with their names and whether they are an apellant or respondent
-    - judge : the name of the judge, and their title, their jurisdiction
+    - judge : judge: the surname of the judge (e.g., 'Pepperall' or 'Bright', followed by their title (e.g., 'Mr Justice'), their jurisdiction from the following England and Wales, Nothern Ireland, Scotland
     - legislations: a list of the legislation names
     - neutral_citation: the neutral citation number
     - court_name: name of court
     - court_address: the courts address
-    - case_number: the number of the case
+    - case_number: the value of Case No
 
   
-
 
     This MUST be a json and only be a list of dictionaries
     """
