@@ -9,3 +9,5 @@ pyarrow
 boto3
 moto
 psycopg2
+beautifulsoup4
+lxml
