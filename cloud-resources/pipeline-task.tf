@@ -1,16 +1,20 @@
 resource "aws_ecr_repository" "pipeline" {
-  name = "daily-judgment-pipeline"
+  name = "judgment-reader-pipeline"
   image_tag_mutability = "MUTABLE"
   force_delete = true
+}
 
+resource "null_resource" "initialise_pipeline_ecr" {
   provisioner "local-exec" {
     command = <<EOT
       aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin ${local.account_id}.dkr.ecr.eu-west-2.amazonaws.com
       docker build --platform linux/arm64 --provenance false -t pigasus-pipeline .
       docker tag pigasus-pipeline:latest ${aws_ecr_repository.pipeline.repository_url}:latest
-      docker push ${aws_ecr_repository.pipeline.repository_url}:latest    
+      docker push ${aws_ecr_repository.pipeline.repository_url}:latest
     EOT
   }
+
+  depends_on = [aws_ecr_repository.pipeline]
 }
 
 resource "aws_security_group" "pipeline" {
@@ -18,7 +22,7 @@ resource "aws_security_group" "pipeline" {
   vpc_id = aws_vpc.main.id
 
   dynamic "ingress" {
-    for_each = var.pipeline_sg_ports
+    for_each = concat(var.pipeline_sg_ports, [aws_db_instance.main.port])
 
     content {
       from_port = ingress.value 
@@ -28,7 +32,7 @@ resource "aws_security_group" "pipeline" {
   }
 
   dynamic "egress" {
-    for_each = var.pipeline_sg_ports 
+    for_each = concat(var.pipeline_sg_ports, [aws_db_instance.main.port])
 
     content {
       from_port = egress.value 
@@ -40,7 +44,7 @@ resource "aws_security_group" "pipeline" {
 
 resource "aws_ecs_task_definition" "pipeline" {
   family = "judgment-reader-pipeline"
-  requires_compatibilites = ["FARGATE"]
+  requires_compatibilities = ["FARGATE"]
   network_mode = "awsvpc"
   cpu = 256
   memory = 512

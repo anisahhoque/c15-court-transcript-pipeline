@@ -24,3 +24,7 @@ resource "aws_db_instance" "main" {
   db_subnet_group_name = aws_db_subnet_group.default.name
   deletion_protection = false
 }
+
+locals {
+  main_db_port = aws_db_instance.main.port
+}

@@ -22,7 +22,6 @@ variable "pipeline_sg_ports" {
   type = list(number)
   default = [
     80,
-    443,
-    aws_db_instance.main.port
+    443
   ]
 }

@@ -12,3 +12,9 @@ provider "aws" {
   access_key = var.access_key
   secret_key = var.secret_key
 }
+
+data "aws_caller_identity" "current" {}
+
+locals {
+  account_id = data.aws_caller_identity.current.account_id
+}
