@@ -1,4 +1,4 @@
-"""File that downloads previous day's judgements."""
+"""File that downloads previous day's judgments."""
 
 from os import environ as ENV, makedirs
 from datetime import datetime, timedelta
@@ -15,8 +15,11 @@ from bs4 import BeautifulSoup
 BASE_URL = "https://caselaw.nationalarchives.gov.uk/atom.xml?per_page=9999"
 
 
-def get_judgements_from_atom_feed(url: str) -> list[str]:
-    """Extracts judgement titles and xml links from an Atom XML feed."""
+def get_judgments_from_atom_feed(url: str) -> list[dict]:
+    """Extracts judgment titles and xml links from an Atom XML feed.
+    Returns a list of dictionaries, each dictionary corresponding to a judgment.
+    Each dictionary has a particular judgment's neutral citation number
+    as its title (a string) and link to the judgment xml (a string)."""
     try:
         result = requests.get(url, timeout=30)
         result.raise_for_status()
@@ -26,19 +29,20 @@ def get_judgements_from_atom_feed(url: str) -> list[str]:
     soup = BeautifulSoup(result.text, "xml")
     entries = soup.find_all("entry")
     base_link = "https://caselaw.nationalarchives.gov.uk/"
-    judgements = []
+    judgments = []
     for entry in entries:
         link = entry.find("link", {"rel": "alternate"})["href"]
-        judgement = {
+        judgment = {
             "title" : f"{link.replace(base_link, "").replace("/", "-")}.xml",
             "link" : f"{link}/data.xml"
         }
-        judgements.append(judgement)
-    return judgements
+        judgments.append(judgment)
+    return judgments
 
 
 def create_daily_atom_feed_url() -> str:
-    """Creates atom feed URL for previous day's judgements."""
+    """Creates atom feed URL for previous day's judgments.
+    Returns the atom feed URL of the previous day's judgments as a string."""
     today = datetime.today() - timedelta(days = 1)
     day, month, year = today.day, today.month, today.year
 
@@ -47,7 +51,8 @@ def create_daily_atom_feed_url() -> str:
 
 
 def create_client(aws_access_key_id: str, aws_secret_access_key: str) -> BaseClient:
-    """Creates botcore s3 client with given access key and secret access key."""
+    """Creates botcore s3 client with given access key and secret access key.
+    Returns a BaseClient object for s3 service."""
     try:
         s_three_client = client("s3", aws_access_key_id=aws_access_key_id,
                      aws_secret_access_key=aws_secret_access_key)
@@ -70,8 +75,9 @@ def upload_url_to_s3(s_three_client: BaseClient, url: str, bucket_name: str, s3_
         raise
 
 
-def download_url(local_folder: str, url: str, file_name: str):
-    """Downloads file from a URL to local folder."""
+def download_url(local_folder: str, url: str, file_name: str) -> None:
+    """Downloads file from a URL to a given folder in current path,
+    creating it if it doesn't already exist."""
     makedirs(local_folder, exist_ok=True)
     try:
         response = requests.get(url, timeout=30)
@@ -89,11 +95,11 @@ def download_url(local_folder: str, url: str, file_name: str):
 if __name__ == "__main__":
     load_dotenv()
     daily_link = create_daily_atom_feed_url()
-    daily_judgements = get_judgements_from_atom_feed(daily_link)
+    daily_judgments = get_judgments_from_atom_feed(daily_link)
     my_aws_access_key_id = ENV["AWS_ACCESS_KEY"]
     my_aws_secret_access_key = ENV["AWS_SECRET_ACCESS_KEY"]
     s_three = create_client(my_aws_access_key_id, my_aws_secret_access_key)
-    for daily_judgement in daily_judgements:
-        upload_url_to_s3(s_three, daily_judgement["link"],
-                         ENV["AWS_BUCKET"], daily_judgement["title"])
-        download_url("judgements", daily_judgement["link"], daily_judgement["title"])
+    for daily_judgment in daily_judgments:
+        upload_url_to_s3(s_three, daily_judgment["link"],
+                         ENV["AWS_BUCKET"], daily_judgment["title"])
+        download_url("judgments", daily_judgment["link"], daily_judgment["title"])

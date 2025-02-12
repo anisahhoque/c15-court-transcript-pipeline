@@ -10,7 +10,7 @@ import requests
 from botocore.exceptions import NoCredentialsError, PartialCredentialsError
 
 from extract import (
-    get_judgements_from_atom_feed,
+    get_judgments_from_atom_feed,
     create_daily_atom_feed_url,
     upload_url_to_s3,
     download_url,
@@ -34,13 +34,13 @@ def fixture_mock_requests_get(mocker):
     """Fixture for patching requests.get."""
     return mocker.patch("requests.get")
 
-def test_get_judgements_from_atom_feed(mock_requests_get):
+def test_get_judgments_from_atom_feed(mock_requests_get):
     """Tests that the function returns a list of dicts of appropriate values."""
     mock_response = MagicMock()
     mock_response.text = """
     <feed>
         <entry>
-            <title>Test Judgement</title>
+            <title>Test judgment</title>
             <link rel="alternate" href="https://caselaw.nationalarchives.gov.uk/ewca/civ/2025/108" />
         </entry>
     </feed>
@@ -51,11 +51,11 @@ def test_get_judgements_from_atom_feed(mock_requests_get):
         "title": "ewca-civ-2025-108.xml",
         "link": "https://caselaw.nationalarchives.gov.uk/ewca/civ/2025/108/data.xml"
     }]
-    assert get_judgements_from_atom_feed("dummy_url") == expected
+    assert get_judgments_from_atom_feed("dummy_url") == expected
     mock_requests_get.assert_called_once_with("dummy_url", timeout=30)
 
 
-def test_get_judgements_from_atom_feed_logging(mock_requests_get, caplog):
+def test_get_judgments_from_atom_feed_logging(mock_requests_get, caplog):
     """Tests when the function raises a requestexception, including its log message."""
     mock_response = MagicMock()
     mock_response.raise_for_status.side_effect = \
@@ -63,7 +63,7 @@ def test_get_judgements_from_atom_feed_logging(mock_requests_get, caplog):
     mock_requests_get.return_value = mock_response
     with caplog.at_level(logging.ERROR):
         with pytest.raises(requests.exceptions.RequestException):
-            get_judgements_from_atom_feed("dummy_url")
+            get_judgments_from_atom_feed("dummy_url")
     assert "Error requesting data from URL:" in caplog.text
 
 
