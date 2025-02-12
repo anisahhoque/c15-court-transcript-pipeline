@@ -45,6 +45,7 @@ htmlcov/
 .cache
 nosetests.xml
 coverage.xml
+coverage.json
 *.cover
 *.py,cover
 .hypothesis/
@@ -169,4 +170,7 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# judgements folder
+judgements
 
