@@ -13,21 +13,21 @@ provider "aws" {
   secret_key = var.secret_key
 }
 
-resource "aws_vpc" "judgement_project" {
+resource "aws_vpc" "judgment_project" {
   cidr_block = "10.0.0.0/16"
 
   tags = {
-    Name = "judgement-reader"
+    Name = "judgment-reader"
   }
 }
 
-resource "aws_s3_bucket" "judgement_xml" {
-  bucket = "judgement-xml"
+resource "aws_s3_bucket" "judgment_xml" {
+  bucket = "judgment-xml"
   force_destroy = true
 }
 
 resource "aws_subnet" "private-a" {
-  vpc_id = aws_vpc.judgement_project.id 
+  vpc_id = aws_vpc.judgment_project.id 
   cidr_block = "10.0.3.0/24"
   availability_zone = "eu-west-2a"
 
@@ -37,7 +37,7 @@ resource "aws_subnet" "private-a" {
 }
 
 resource "aws_subnet" "private-b" {
-  vpc_id = aws_vpc.judgement_project.id 
+  vpc_id = aws_vpc.judgment_project.id 
   cidr_block = "10.0.4.0/24"
   availability_zone = "eu-west-2b"
 
@@ -58,7 +58,7 @@ resource "aws_db_instance" "main" {
   allocated_storage = 20
   engine = "postgres"
   engine_version = "17"
-  identifier = "c15-judgement-reader"
+  identifier = "c15-judgment-reader"
   instance_class = "db.t4g.micro"
   storage_encrypted = false
   publicly_accessible = false 
