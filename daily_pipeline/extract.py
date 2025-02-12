@@ -16,8 +16,8 @@ BASE_URL = "https://caselaw.nationalarchives.gov.uk/atom.xml?per_page=9999"
 
 
 def get_judgments_from_atom_feed(url: str) -> list[dict]:
-    """Extracts judgment titles and xml links from an Atom XML feed.
-    Returns a list of dictionaries, each dictionary corresponding to a judgment.
+    """Returns a list of dictionaries, each dictionary corresponding to a judgment.
+    
     Each dictionary has a particular judgment's neutral citation number
     as its title (a string) and link to the judgment xml (a string)."""
     try:
