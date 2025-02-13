@@ -7,12 +7,11 @@ import streamlit as st
 
 @st.cache_resource
 def get_db_connection() -> connection:
-    """Returns a live connection to the local PostgreSQL database."""
-    config = {
-        "dbname": ENV.get("DB_NAME"),
-        "user": ENV.get("DB_USER"),
-        "password": ENV.get("DB_PASSWORD"),
-        "host": ENV.get("DB_HOST"),
-        "port": ENV.get("DB_PORT")
-    }
-    return connect(**config)
+    """Returns a live connection to PostgreSQL database."""
+    return connect(
+        dbname=ENV.get("DB_NAME"),
+        user=ENV.get("DB_USER"),
+        password=ENV.get("DB_PASSWORD"),
+        host=ENV.get("DB_HOST"),
+        port=ENV.get("DB_PORT")
+    )
