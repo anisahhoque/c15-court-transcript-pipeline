@@ -9,17 +9,7 @@ from pydantic import BaseModel
 
 load_dotenv()
 
-class Counsel(BaseModel):
-    """Represents a counsel for a party"""
-    counsel_name: str
-    counsel_title: str
-    chamber_name: str
 
-class Party(BaseModel):
-    """Represents a party involved in a legal case."""
-    party_name: str
-    party_role: str
-    counsels: list[Counsel]
 
 class Judge(BaseModel):
     """Represents a judge involved in a legal case."""
@@ -38,54 +28,46 @@ class Argument(BaseModel):
     summary: str
     judgments_referenced: list[Judgment]
     legislations_referenced: list[Legislation]
+
+class Counsel(BaseModel):
+    """Represents a counsel for a party"""
+    counsel_name: str
+    counsel_title: str
+    chamber_name: str
+    arguments: list[Argument]
+
+
+class Party(BaseModel):
+    """Represents a party involved in a legal case."""
+    party_name: str
+    party_role: str
+    counsels: list[Counsel]
     
 class CaseOutput(BaseModel):
     """All details to be extracted from the xmls"""
-    date: str
     hearing_dates: list[str]
     type_of_crime: str
     description: str
-    parties: list[Party]
     judge: list[Judge]
     legislations: list[Legislation]
-    neutral_citation: Judgment
-    court_name: str
-    court_address: str
-    case_number: str
     referenced_judgments: list[Judgment]
-    arguments: list[Argument]
+    parties: list[Party]
 
-class LawOutput(BaseModel):
+class JudgmentOutput(BaseModel):
     """Returns all information in a case summary"""
     case_summary: list[CaseOutput]
-
-
-
-
-
-
-
 
 
 def print_case_details(case_data: dict) -> None:
     """
     Formats and prints case data in a clean, readable format
     """
-    print("\n" + "="*50)
-    print(f"CASE #{case_data['case_number']}")
-    print(f"JUDGMENT DATE {case_data['date']}")
-    print("="*50 + "\n")
-
-    print("COURT DETAILS")
-    print("-"*30)
-    print(f"Court: {case_data['court_name']}")
-    print(f"Address: {case_data['court_address']}\n")
 
     print("CASE OVERVIEW")
     print("-"*30)
-    print(f"Citation: {case_data['neutral_citation']['neutral_citation']}\n")
     print(f"Type of Crime: {case_data['type_of_crime']}")
-    print(f"Description: {case_data['description']}\n")
+    print(f"Description: {case_data['description']}")
+    print(f"Hearing Dates: {case_data['hearing_dates']}\n")
 
     print("PARTIES INVOLVED")
     print("-"*30)
@@ -117,14 +99,7 @@ def print_case_details(case_data: dict) -> None:
     for judgment in case_data['referenced_judgments']:
         print(f"- {judgment['neutral_citation']}")
 
-    print("ARGUMENTS")
-    print("-"*30)
-    for argument in case_data['arguments']:
-        print(f"Argument Summary: {argument['summary']}")
-        for judgment in argument['judgments_referenced']:
-            print(f"- {judgment['neutral_citation']}")
-        for legislation in argument['legislations_referenced']:
-            print(f"- {legislation['legislation_name']}")
+
 
 
 def get_client() -> OpenAI:
@@ -158,21 +133,25 @@ def get_case_summaries(model: str, client: OpenAI, prompt: str) -> list[dict]:
             }
         ],
         model=model,
-        response_format=LawOutput,
+        response_format=JudgmentOutput,
         )
         response_choices = response.choices[0].message
-
-        for i in json.loads(response_choices.content).get("case_summary"):
+        data = json.loads(response_choices.content).get("case_summary")
+        for i in data:
             print_case_details(i)
 
-        return json.loads(response_choices.content).get("case_summary")
+
+        with open('gpt_response.json','w', encoding='utf-8') as file:
+            json.dump(data, file, indent=4)
+            
+        return data
 
     except OpenAIError as e:
         logging.error('An error occurred while trying to retrieve case information - %s', str(e))
 
 if __name__=="__main__":
     api_client = get_client()
-    GPT_MODEL = "o3-mini"
+    GPT_MODEL = "gpt-4o-mini"
     file_names = ['ukut_iac_2021_202.xml','ewhc_comm_2025_240.xml']
     list_of_cases = get_list_xml_data(filenames=[file_names[0]])
     PROMPT = f"""

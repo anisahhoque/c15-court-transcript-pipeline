@@ -1,0 +1,87 @@
+[
+    {
+        "hearing_dates": [
+            "30 November 2020",
+            "31 December 2020"
+        ],
+        "type_of_crime": "civil",
+        "description": "The case involves the applicant News Group Newspapers Ltd seeking to lift an anonymity order granted to Selami Cokaj, a convicted murderer, in light of freedom of expression and open justice principles. The tribunal weighs the rights under Articles 8 and 10 of the ECHR and assesses the implications of lifting the anonymity order for Cokaj and his family.",
+        "judge": [
+            {
+                "judge_name": "Mr Justice Lane",
+                "judge_title": "President"
+            }
+        ],
+        "legislations": [
+            {
+                "legislation_name": "Nationality, Immigration and Asylum Act 2002"
+            },
+            {
+                "legislation_name": "European Convention on Human Rights"
+            }
+        ],
+        "referenced_judgments": [
+            {
+                "neutral_citation": "[2007] UKHL 36"
+            },
+            {
+                "neutral_citation": "[2010] EWCA Civ 1429"
+            },
+            {
+                "neutral_citation": "[2020] EWCA Civ 1176"
+            },
+            {
+                "neutral_citation": "[2010] UKSC 1"
+            }
+        ],
+        "parties": [
+            {
+                "party_name": "News Group Newspapers Ltd",
+                "party_role": "Applicant",
+                "counsels": [
+                    {
+                        "counsel_name": "Mr J Bunting",
+                        "counsel_title": "Counsel",
+                        "chamber_name": "NGN Legal.",
+                        "arguments": []
+                    }
+                ]
+            },
+            {
+                "party_name": "Selami Cokaj",
+                "party_role": "Respondent",
+                "counsels": [
+                    {
+                        "counsel_name": "Mr Z Malik",
+                        "counsel_title": "",
+                        "chamber_name": "Bond Adam LLP Solicitors",
+                        "arguments": [
+                            {
+                                "summary": "Cokaj argues that his anonymity should be preserved for his family's safety and thus weighs against the applicant's claims.",
+                                "judgments_referenced": [],
+                                "legislations_referenced": []
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "party_name": "Secretary of State for the Home Department",
+                "party_role": "Interested Party",
+                "counsels": [
+                    {
+                        "counsel_name": "Mr M Gullick",
+                        "counsel_title": "",
+                        "chamber_name": "Government Legal Department",
+                        "arguments": []
+                    }
+                ]
+            },
+            {
+                "party_name": "Mr Justice Lane",
+                "party_role": "Judge",
+                "counsels": []
+            }
+        ]
+    }
+]

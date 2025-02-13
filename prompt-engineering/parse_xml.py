@@ -10,9 +10,7 @@ def get_metadata(xml_filename: str) -> dict:
     metadata = {
         'court_name': '',
         'neutral_citation': '',
-        'judgment_date': '',
-        'parties': [] 
-    }
+        'judgment_date': ''}
 
     metadata['neutral_citation'] = soup.find('neutralCitation').text if soup.find('neutralCitation') else ""
     metadata['judgment_date'] = soup.find('FRBRdate').get('date')
@@ -20,15 +18,7 @@ def get_metadata(xml_filename: str) -> dict:
     metadata['court_name'] = court_name.get('showAs')
 
 
-    parties = soup.find_all('party')
 
-    for party in parties:
-        party_data = {
-            'party_name': party.text if party.text else "",
-            'party_role': party.get('as').lstrip('#'),
-        }
-
-    metadata['parties'].append(party_data)
     return metadata
 
 
