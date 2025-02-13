@@ -1,14 +1,9 @@
 """Functions that handle communication with the database."""
 
 from os import environ as ENV
-
 from psycopg2 import connect
-from psycopg2.extras import RealDictCursor
 from psycopg2.extensions import connection
 import streamlit as st
-import pandas as pd
-from dotenv import load_dotenv
-
 
 @st.cache_resource
 def get_db_connection() -> connection:
@@ -22,9 +17,3 @@ def get_db_connection() -> connection:
     }
 
     return connect(**config)
-
-@st.cache_resource
-def get_latest_cases(connection):
-
-    query = """SELECT * FR"""
-    
