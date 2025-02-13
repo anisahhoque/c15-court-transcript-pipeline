@@ -1,5 +1,3 @@
-\c judgments;
-
 DROP TABLE IF EXISTS argument_legislation;
 DROP TABLE IF EXISTS legislation_section;
 DROP TABLE IF EXISTS judgement_reference;
