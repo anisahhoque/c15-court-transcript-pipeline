@@ -36,5 +36,5 @@ if __name__=="__main__":
     print(get_metadata('ukut_iac_2021_202.xml'))
     print(get_metadata('ewca-civ-2025-113.xml'))
 
-    #Confident in retrieving: court name, neutral citation, judgement date, parties+roles
-    #AI : judges,arguments,legislations,judgment references, counsels+chambers, casenumber-doesnt always exist, hearing dates
+    #AI : judges,arguments,legislations,judgment references, counsels+chambers,
+    # casenumber-doesnt always exist, hearing dates
