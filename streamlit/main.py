@@ -9,6 +9,7 @@ from components import dashboard_title
 
 if __name__ == "__main__":
     load_dotenv()
-    
+
+    dashboard_title()
 
     

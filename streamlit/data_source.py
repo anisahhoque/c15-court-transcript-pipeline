@@ -26,5 +26,5 @@ def get_db_connection() -> connection:
 @st.cache_resource
 def get_latest_cases(connection):
 
-    query = """"""
+    query = """SELECT * FR"""
     
