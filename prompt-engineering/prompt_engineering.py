@@ -1,216 +1,79 @@
 """This file extracts data from xmls using OpenAI API"""
-import json
-import logging
-from lxml import etree
-from os import environ as ENV
-from dotenv import load_dotenv
-from openai import OpenAI, OpenAIError
-from pydantic import BaseModel
+import re
+from bs4 import BeautifulSoup
 
-load_dotenv()
-
-class Counsel(BaseModel):
-    """Represents a counsel for a party"""
-    counsel_name: str
-    counsel_title: str
-    chamber_name: str
-
-class Party(BaseModel):
-    """Represents a party involved in a legal case."""
-    party_name: str
-    party_role: str
-    counsels: list[Counsel]
-
-class Judge(BaseModel):
-    """Represents a judge involved in a legal case."""
-    judge_name: str
-    judge_title: str
-
-class Legislation(BaseModel):
-    """Represents legislations referenced in the judgment"""
-    legislation_name: str
-
-class Judgment(BaseModel):
-    """Reference/unique id for a judgment"""
-    neutral_citation: str
-
-class Argument(BaseModel):
-    summary: str
-    judgments_referenced: list[Judgment]
-    legislations_referenced: list[Legislation]
-    
-class CaseOutput(BaseModel):
-    """All details to be extracted from the xmls"""
-    date: str
-    hearing_dates: list[str]
-    type_of_crime: str
-    description: str
-    parties: list[Party]
-    judge: list[Judge]
-    legislations: list[Legislation]
-    neutral_citation: Judgment
-    court_name: str
-    court_address: str
-    case_number: str
-    referenced_judgments: list[Judgment]
-    arguments: list[Argument]
-
-class LawOutput(BaseModel):
-    """Returns all information in a case summary"""
-    case_summary: list[CaseOutput]
 
 
 def get_metadata(xml_filename: str) -> dict:
+    """Returns the meta data that can be easily extracted from the xml"""
+
+    with open(xml_filename, 'r', encoding='UTF-8') as file:
+        soup = BeautifulSoup(file, 'xml')
     metadata = {
         'court_name': '',
-        'court_address': '',
         'case_number': '',
         'neutral_citation': '',
-        'date': '',
-        'hearing_dates': [],
+        'judgment_date': '',
+        'hearing_date': '',
         'judge': [],
-        'parties': []
+        'parties': [] 
     }
-    tree = etree.parse(xml_filename)
-    root = tree.getroot()
+
+    metadata['neutral_citation'] = soup.find('neutralCitation').text if soup.find('neutralCitation') else ""
+    judges = soup.find_all('TLCPerson')
+    for x in judges:
+        print(x.get('showAs'))
+    metadata['case_number'] = soup.find('docketNumber').text if soup.find('docketNumber') else ""
+    metadata['judgment_date'] = soup.find('FRBRdate').get('date')
+
+    court_name = soup.find("TLCOrganization")
+    metadata['court_name'] = court_name.get('showAs')
 
 
+    parties = soup.find_all('party')
+
+    p_tags = soup.find_all('p', style="text-align:center")
+    for party in parties:
+        party_data = {
+            'party_name': party.text if party.text else "",
+            'party_role': party.get('as'),
+            'counsels': []
+        }
+
+        for p_tag in p_tags:
+            if 'hearing date' in p_tag.text.lower():
+                match = re.search(r'\b\d{1,2}(?:st|nd|rd|th)?\s+\w+\s+\d{4}\b', p_tag.text)
+                if match:
+                    hearing_date = match.group()
+                    metadata['hearing_date'] = hearing_date
 
 
-
-def print_case_details(case_data: dict) -> None:
-    """
-    Formats and prints case data in a clean, readable format
-    """
-    print("\n" + "="*50)
-    print(f"CASE #{case_data['case_number']}")
-    print(f"JUDGMENT DATE {case_data['date']}")
-    print("="*50 + "\n")
-
-    print("COURT DETAILS")
-    print("-"*30)
-    print(f"Court: {case_data['court_name']}")
-    print(f"Address: {case_data['court_address']}\n")
-
-    print("CASE OVERVIEW")
-    print("-"*30)
-    print(f"Citation: {case_data['neutral_citation']['neutral_citation']}\n")
-    print(f"Type of Crime: {case_data['type_of_crime']}")
-    print(f"Description: {case_data['description']}\n")
-
-    print("PARTIES INVOLVED")
-    print("-"*30)
-    for party in case_data['parties']:
-        print(f"Name: {party['party_name']}")
-        print(f"Role: {party['party_role']}")
-        for counsel in party['counsels']:
-            print(f"Counsel Name: {counsel['counsel_name']}")
-            print(f"Counsel Title: {counsel['counsel_title']}")
-            print(f"Chamber Name: {counsel['chamber_name']}")
-        print()
-    print()
-
-    print("JUDGES")
-    print("-"*30)
-    for judge in case_data['judge']:
-        print(f"Name: {judge['judge_name']}")
-        print(f"Title: {judge['judge_title']}")
-        print()
-
-    print("RELEVANT LEGISLATION")
-    print("-"*30)
-    for legislation in case_data['legislations']:
-        print(f"- {legislation['legislation_name']}")
-    print()
-
-    print("REFERENCED JUDGMENTS")
-    print("-"*30)
-    for judgment in case_data['referenced_judgments']:
-        print(f"- {judgment['neutral_citation']}")
-
-    print("ARGUMENTS")
-    print("-"*30)
-    for argument in case_data['arguments']:
-        print(f"Argument Summary: {argument['summary']}")
-        for judgment in argument['judgments_referenced']:
-            print(f"- {judgment['neutral_citation']}")
-        for legislation in argument['legislations_referenced']:
-            print(f"- {legislation['legislation_name']}")
+            contain_span = p_tag.find_all('span')
+            for span in contain_span:
+                if party.text.strip().lower() in span.text.strip().lower():
+                    counsel_text = ' '.join([span.text.strip() for span in contain_span])
+                    chamber_match = re.search(r'\(instructed by ([^)]+)\)', counsel_text)
+                    chamber = chamber_match.group(1) if chamber_match else "Unknown"
+                    counsel_names = counsel_text[:counsel_text.find('(')].split('and')
+                    for name in counsel_names:
+                        counsel = {}
+                        counsel['counsel_name'] = name.strip()
+                        counsel['chamber_name'] = chamber
+                        party_data['counsels'].append(counsel)
+            
 
 
-def get_client() -> OpenAI:
-    """Returns a client for the API"""
-    try:
-        client = OpenAI(
-        api_key=ENV.get("OPENAI_API_KEY"),
-        timeout=10.0,
-        )
-        return client
-    except OpenAIError as e:
-        logging.error('Failed to return an OpenAI client - %s', str(e))
-
-
-def get_list_xml_data(filenames: list[str]) -> list[str]:
-    """Reads xmls and returns a list of strings with the xml data"""
-    cases = []
-    for file in filenames:
-        with open(file, 'r', encoding='UTF-8') as file:
-            cases.append(file.read())
-    return cases
-
-def get_case_summaries(model: str, client: OpenAI, prompt: str) -> list[dict]:
-    """Returns a list of dictionaries for each xml with the relevant data"""
-    try:
-        response = client.with_options(timeout=60).beta.chat.completions.parse(
-        messages=[
-            {
-                "role": "user",
-                "content": prompt,
-            }
-        ],
-        model=model,
-        response_format=LawOutput,
-        )
-        response_choices = response.choices[0].message
-
-        for i in json.loads(response_choices.content).get("case_summary"):
-            print_case_details(i)
-
-        return json.loads(response_choices.content).get("case_summary")
-
-    except OpenAIError as e:
-        logging.error('An error occurred while trying to retrieve case information - %s', str(e))
-
-if __name__=="__main__":
-    api_client = get_client()
-    GPT_MODEL = "o3-mini"
-    file_names = ['ewhc_kb_2025_287.xml','ewhc_comm_2025_240.xml']
-    list_of_cases = get_list_xml_data(filenames=[file_names[0]])
-    PROMPT = f"""
-    I have a list of court case transcriptions:
-    {list_of_cases}
-
-    Please analyse each case and return a summary for each.
-
-    Give me a summary for each of the cases provided. Your response should be in a list of dictionaries containing the following keys:
-    - date: date of the approved judgment
-    - hearing_dates: a list of dates for all hearings
-    - type_of_crime: criminal or civil 
-    - description: a short summary of the trial
-    - parties : a list of party dictionaries with their names and what role they are -  apellant, defendant, claimant, Also for each party they have some counsels - example William Bennett KC and Ben Hamer (instructed by Brett Wilson LLP) for Dale Vince OBE - William Bennett is a counsel name, KC = Kings Counsel which is a counsel title, Ben Hammer is another Counsel name with no title, Brett Wilson LLP is a chamber name
-    - judge : the surname of the judge (e.g., 'Pepperall' or 'Bright', followed by their title (e.g., 'Mr Justice')
-    - legislations: a list of the legislation names
-    - neutral_citation: the neutral citation number
-    - court_name: name of court
-    - court_address: the courts address
-    - case_number: the value of Case No
-    - referenced_judgments: the neutral citations that are referenced are references to other judgments
-    - arguments: list of arguments made in the judgment which contains neutral citations(references to other judgments), list of references to legislations and a summary of the argument
 
   
+        metadata['parties'].append(party_data)
 
-    This MUST be a json and only be a list of dictionaries
-    """
-    get_metadata(list_of_cases[0])
+    
 
-    #get_case_summaries(model=GPT_MODEL,client=api_client,prompt=PROMPT)
+    #print(metadata)
+if __name__=="__main__":
+    get_metadata('ukut_iac_2021_202.xml')
+    #get_metadata('ewca-civ-2025-113.xml')
+
+    #Confident in retrieving: court name, neutral citation, judgement date, parties+roles
+    #Could retrieve: case number - didnt always exist, hearing date
+    #AI : judges,arguments,legislations,judgment references, counsels+chambers
