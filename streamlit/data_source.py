@@ -15,5 +15,4 @@ def get_db_connection() -> connection:
         "host": ENV.get("DB_HOST"),
         "port": ENV.get("DB_PORT")
     }
-
     return connect(**config)
