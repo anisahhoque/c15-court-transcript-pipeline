@@ -155,7 +155,6 @@ court=None, case_type=None, judgment_date=None) -> pd.DataFrame:
 
     return df
 
-
 def display_judgment_search(conn: connection) -> None:
     """Displays the interface for Judgment Search Page on Streamlit."""
 
@@ -217,8 +216,8 @@ def display_judgment_search(conn: connection) -> None:
 
 
 
-
-def fetch_case_overview(conn:connection, neutral_citation:str) -> dict:
+@st.cache_resource
+def fetch_case_overview(_conn:connection, neutral_citation:str) -> dict:
     """Returns the overview of a selected judgment, including the judge's title and name."""
     query = """
         SELECT 
@@ -236,7 +235,7 @@ def fetch_case_overview(conn:connection, neutral_citation:str) -> dict:
         LEFT JOIN argument a ON j.neutral_citation = a.neutral_citation
         WHERE j.neutral_citation = %s;
     """
-    with conn.cursor() as cursor:
+    with _conn.cursor() as cursor:
         cursor.execute(query, (neutral_citation,))
         result = cursor.fetchone()
 
@@ -253,12 +252,11 @@ def fetch_case_overview(conn:connection, neutral_citation:str) -> dict:
         }
         return case_overview
 
-
-def fetch_parties_involved(conn: connection, neutral_citation: str) -> dict:
+@st.cache_resource
+def fetch_parties_involved(_conn: connection, neutral_citation: str) -> dict:
     """
     Returns a dictionary mapping role types to lists of party names.
     """
-    print(neutral_citation)
     query = """
         SELECT r.role_name, p.party_name
         FROM party p
@@ -270,7 +268,7 @@ def fetch_parties_involved(conn: connection, neutral_citation: str) -> dict:
     parties_involved = {}
 
     try:
-        with conn.cursor() as cur:
+        with _conn.cursor() as cur:
             cur.execute(query, (neutral_citation,))
             results = cur.fetchall()
 
