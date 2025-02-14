@@ -43,6 +43,7 @@ resource "aws_db_instance" "main" {
   multi_az = false
   db_subnet_group_name = aws_db_subnet_group.default.name
   deletion_protection = false
+  vpc_security_group_ids = [aws_security_group.main_database.id]
 }
 
 locals {
