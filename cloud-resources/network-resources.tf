@@ -62,7 +62,7 @@ resource "aws_route_table" "public" {
 
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.main.id 
+    gateway_id = aws_internet_gateway.main.id
   }
 
   tags = {
@@ -71,11 +71,60 @@ resource "aws_route_table" "public" {
 }
 
 resource "aws_route_table_association" "public_a" {
-  subnet_id = aws_subnet.public_a.id 
+  subnet_id = aws_subnet.public_a.id
   route_table_id = aws_route_table.public.id
 }
 
 resource "aws_route_table_association" "public_b" {
-  subnet_id = aws_subnet.public_b.id 
+  subnet_id = aws_subnet.public_b.id
   route_table_id = aws_route_table.public.id
+}
+
+resource "aws_route_table" "private" {
+  vpc_id = aws_vpc.main.id
+}
+
+resource "aws_route_table_association" "private_a" {
+  subnet_id = aws_subnet.private_a.id
+  route_table_id = aws_route_table.private.id
+}
+
+resource "aws_route_table_association" "private_b" {
+  subnet_id = aws_subnet.private_b.id
+  route_table_id = aws_route_table.private.id
+}
+
+resource "aws_vpc_endpoint" "s3" {
+  vpc_id = aws_vpc.main.id
+  service_name = "com.amazonaws.eu-west-2.s3"
+}
+
+resource "aws_vpc_endpoint_policy" "s3" {
+  vpc_endpoint_id = aws_vpc_endpoint.s3.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = [
+          "s3:GetObject"
+        ]
+        Effect = "Allow"
+        Resource = [
+          aws_s3_bucket.judgment_xml.arn,
+          "${aws_s3_bucket.judgment_xml.arn}/*"
+        ]
+        Principal = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_vpc_endpoint_route_table_association" "s3_private" {
+  route_table_id = aws_route_table.private.id
+  vpc_endpoint_id = aws_vpc_endpoint.s3.id
+}
+
+resource "aws_vpc_endpoint_route_table_association" "s3_public" {
+  route_table_id = aws_route_table.public.id
+  vpc_endpoint_id = aws_vpc_endpoint.s3.id
 }
