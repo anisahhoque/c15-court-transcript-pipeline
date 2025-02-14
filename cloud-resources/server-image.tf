@@ -13,7 +13,5 @@ resource "null_resource" "initialise_server_ecr" {
       docker push ${aws_ecr_repository.server.repository_url}:latest
     EOT
   }
-
-  depends_on = [aws_ecr_repository.pipeline]
 }
 
