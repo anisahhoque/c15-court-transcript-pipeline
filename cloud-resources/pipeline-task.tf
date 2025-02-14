@@ -24,6 +24,10 @@ locals {
   )
 }
 
+output "pipeline_sg_ports" {
+  value = local.pipeline_sg_ports
+}
+
 resource "aws_security_group" "pipeline" {
   name = "judgment-reader-pipeline"
   vpc_id = aws_vpc.main.id
