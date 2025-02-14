@@ -14,11 +14,11 @@ load_dotenv()
 class Judge(BaseModel):
     """Represents a judge involved in a legal case."""
     judge_name: str
-    judge_title: str
 
 class Legislation(BaseModel):
     """Represents legislations referenced in the judgment"""
     legislation_name: str
+    legislation_section: str
 
 class Judgment(BaseModel):
     """Reference/unique id for a judgment"""
@@ -34,7 +34,6 @@ class Counsel(BaseModel):
     counsel_name: str
     counsel_title: str
     chamber_name: str
-    arguments: list[Argument]
 
 
 class Party(BaseModel):
@@ -42,64 +41,19 @@ class Party(BaseModel):
     party_name: str
     party_role: str
     counsels: list[Counsel]
-    
+    arguments: list[Argument]
+
+
 class CaseOutput(BaseModel):
     """All details to be extracted from the xmls"""
-    hearing_dates: list[str]
     type_of_crime: str
     description: str
     judge: list[Judge]
-    legislations: list[Legislation]
-    referenced_judgments: list[Judgment]
     parties: list[Party]
 
 class JudgmentOutput(BaseModel):
     """Returns all information in a case summary"""
     case_summary: list[CaseOutput]
-
-
-def print_case_details(case_data: dict) -> None:
-    """
-    Formats and prints case data in a clean, readable format
-    """
-
-    print("CASE OVERVIEW")
-    print("-"*30)
-    print(f"Type of Crime: {case_data['type_of_crime']}")
-    print(f"Description: {case_data['description']}")
-    print(f"Hearing Dates: {case_data['hearing_dates']}\n")
-
-    print("PARTIES INVOLVED")
-    print("-"*30)
-    for party in case_data['parties']:
-        print(f"Name: {party['party_name']}")
-        print(f"Role: {party['party_role']}")
-        for counsel in party['counsels']:
-            print(f"Counsel Name: {counsel['counsel_name']}")
-            print(f"Counsel Title: {counsel['counsel_title']}")
-            print(f"Chamber Name: {counsel['chamber_name']}")
-        print()
-    print()
-
-    print("JUDGES")
-    print("-"*30)
-    for judge in case_data['judge']:
-        print(f"Name: {judge['judge_name']}")
-        print(f"Title: {judge['judge_title']}")
-        print()
-
-    print("RELEVANT LEGISLATION")
-    print("-"*30)
-    for legislation in case_data['legislations']:
-        print(f"- {legislation['legislation_name']}")
-    print()
-
-    print("REFERENCED JUDGMENTS")
-    print("-"*30)
-    for judgment in case_data['referenced_judgments']:
-        print(f"- {judgment['neutral_citation']}")
-
-
 
 
 def get_client() -> OpenAI:
@@ -137,11 +91,8 @@ def get_case_summaries(model: str, client: OpenAI, prompt: str) -> list[dict]:
         )
         response_choices = response.choices[0].message
         data = json.loads(response_choices.content).get("case_summary")
-        for i in data:
-            print_case_details(i)
 
-
-        with open('gpt_response.json','w', encoding='utf-8') as file:
+        with open('gpt2_response.json','w', encoding='utf-8') as file:
             json.dump(data, file, indent=4)
             
         return data
@@ -151,31 +102,33 @@ def get_case_summaries(model: str, client: OpenAI, prompt: str) -> list[dict]:
 
 if __name__=="__main__":
     api_client = get_client()
-    GPT_MODEL = "gpt-4o-mini"
-    file_names = ['ukut_iac_2021_202.xml','ewhc_comm_2025_240.xml']
-    list_of_cases = get_list_xml_data(filenames=[file_names[0]])
+    GPT_MODEL = "o3-mini"
+    file_names = ['ewhc_comm_2025_240.xml','ukut_iac_2021_202.xml','ewcop_t3_2025_6.xml']
+    list_of_cases = get_list_xml_data(filenames=[file_names[1]])
     PROMPT = f"""
     I have a list of court case transcriptions:
     {list_of_cases}
-
+    You are a lawyer reading judgment transcripts.
     Please analyse each case and return a summary for each.
 
     Give me a summary for each of the cases provided. Your response should be in a list of dictionaries containing the following keys:
-    - date: date of the approved judgment
-    - hearing_dates: a list of dates for all hearings
     - type_of_crime: criminal or civil 
-    - description: a short summary of the trial
-    - parties : a list of party dictionaries with their names and what role they are -  apellant, defendant, claimant, Also for each party they have some counsels - example William Bennett KC and Ben Hamer (instructed by Brett Wilson LLP) for Dale Vince OBE - William Bennett is a counsel name, KC = Kings Counsel which is a counsel title, Ben Hammer is another Counsel name with no title, Brett Wilson LLP is a chamber name
-    - judge : the surname of the judge (e.g., 'Pepperall' or 'Bright', followed by their title (e.g., 'Mr Justice')
-    - legislations: a list of the legislation names
-    - neutral_citation: the neutral citation number
-    - court_name: name of court
-    - court_address: the courts address
-    - case_number: the value of Case No
-    - referenced_judgments: the neutral citations that are referenced are references to other judgments
-    - arguments: list of arguments made in the judgment which contains neutral citations(references to other judgments), list of references to legislations and a summary of the argument
+    - description: a short neutral summary of the trial
+    - judge: The fullname of the judge including the title e.g Mr Justice Smith
+    - parties: A list of all parties involved in the case, with the following details for each party:
+        - name: The name of the party.
+        - role: The role of the party (e.g., "plaintiff", "defendant", "appellant", "respondent").
+        - counsels: A list of counsel(s) for the party, with the following details for each counsel:
+            - name: The name of the counsel (e.g., "William Bennett KC").
+            - title: The title of the counsel (e.g., "KC", "QC", or none).
+            - chamber: The name of the counsel's chambers (e.g., "Brett Wilson LLP").
+        - arguments: A list of unique arguments, claims, or submissions made by the party. For each argument, include:
+            - A brief summary of the argument presented
+            - a list of references(neutral citations) that are mentioned in that specific argument
+            - a list of legislations that are mentioned in that specific argument
+            - legislations have a legislation name and section for example Data Protection Act 2018 Section 17, if no section is specified then label as All
 
-  
+
 
     This MUST be a json and only be a list of dictionaries
     """
