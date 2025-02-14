@@ -282,9 +282,38 @@ def fetch_parties_involved(_conn: connection, neutral_citation: str) -> dict:
                     parties_involved[role] = []
                 parties_involved[role].append(party)
 
-            print(parties_involved)
 
     except Exception as e:
         print(f"Error fetching parties involved: {e}")
 
     return parties_involved
+
+
+def fetch_argument_summary(conn, neutral_citation: str):
+    """
+    Fetches the argument summary for a given neutral citation.
+    Args:
+        conn: The database connection.
+        neutral_citation: The neutral citation of the judgment.
+    Returns:
+        A list of summaries corresponding to the neutral citation.
+    """
+    query = """
+        SELECT a.summary
+        FROM argument a
+        WHERE a.neutral_citation = %s;
+    """
+
+    try:
+        with conn.cursor() as cur:
+            cur.execute(query, (neutral_citation,))
+            results = cur.fetchall()
+
+            # Extract summaries from the results
+            summaries = [row[0] for row in results]
+            return summaries
+
+    except Exception as e:
+        print(f"Error fetching argument summary: {e}")
+        return []
+
