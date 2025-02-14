@@ -232,4 +232,29 @@ def fetch_case_overview(conn:connection, neutral_citation:str) -> dict:
         return case_overview
 
 
+def fetch_parties_involved(conn: connection, neutral_citation: str) -> dict:
+    """
+    Fetches the parties involved in a case based on the neutral citation.
+    Returns a dictionary with 'Appellant' and 'Respondent' lists.
+    """
+    query = """
+        SELECT p.party_name, r.role_name
+        FROM party p
+        JOIN role r ON p.role_id = r.role_id
+        JOIN "case" c ON p.case_id = c.case_id
+        WHERE c.neutral_citation = %s;
+    """
 
+    with conn.cursor() as cur:
+        cur.execute(query, (neutral_citation,))
+        results = cur.fetchall()
+
+    parties = {"Appellant": [], "Respondent": []}
+
+    for party_name, role_name in results:
+        if role_name.lower() == "appellant":
+            parties["Appellant"].append(party_name)
+        elif role_name.lower() == "respondent":
+            parties["Respondent"].append(party_name)
+
+    return parties
