@@ -39,6 +39,7 @@ resource "aws_security_group" "pipeline" {
       from_port = ingress.value 
       to_port = ingress.value 
       protocol = "tcp"
+      cidr_blocks = ["0.0.0.0/0"]
     }
   }
 
@@ -49,6 +50,7 @@ resource "aws_security_group" "pipeline" {
       from_port = egress.value 
       to_port = egress.value
       protocol = "tcp"
+      cidr_blocks = ["0.0.0.0/0"]
     }
   }
 }
@@ -168,7 +170,7 @@ resource "aws_iam_role_policy" "pipeline_scheduler" {
 
 resource "aws_scheduler_schedule" "pipeline" {
   name = "judgment-reader-pipeline"
-  schedule_expression = "cron(0 0 * * ?)"
+  schedule_expression = "cron(1 0 * * ?)"
 
   flexible_time_window {
     mode = "FLEXIBLE"
