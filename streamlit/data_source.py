@@ -108,3 +108,66 @@ def get_random_judgment_with_summary_and_date(_conn:connection) -> dict:
     except Exception as e:
         print(f"Error: {e}")
         return None
+
+# Function to fetch judgment data
+
+
+def fetch_judgments(_conn, search_query="", court=None, case_type=None, judgment_date=None):
+    query = """
+        SELECT j.neutral_citation, j.judgement_date, a.summary AS argument_summary, c.court_name
+        FROM judgment j
+        LEFT JOIN argument a ON j.neutral_citation = a.neutral_citation
+        LEFT JOIN court c ON j.court_id = c.court_id
+        WHERE 1=1
+    """
+
+    # Apply filters dynamically
+    filters = []
+    if search_query:
+        filters.append(
+            f"j.neutral_citation LIKE '%{search_query}%' OR a.summary LIKE '%{search_query}%'")
+    if court and court != "All":
+        filters.append(f"c.court_name = '{court}'")
+    if case_type and case_type != "All":
+        filters.append(f"a.summary LIKE '%{case_type}%'")
+    if judgment_date:
+        filters.append(f"j.judgement_date = '{judgment_date}'")
+
+    if filters:
+        query += " AND " + " AND ".join(filters)
+
+    # Execute query and fetch results
+    with _conn.cursor() as cursor:
+        cursor.execute(query)
+        result = cursor.fetchall()
+
+    # Convert results to DataFrame
+    columns = ["neutral_citation", "judgement_date",
+               "argument_summary", "court_name"]
+    df = pd.DataFrame(result, columns=columns)
+
+    return df
+
+
+def display_judgment_search():
+    # Search and Filters
+    search_query = st.text_input("🔍 Search a Judgment", "")
+
+    col1, col2, col3 = st.columns([1, 1, 2])
+
+    with col1:
+        court_filter = st.selectbox(
+            "Filter by Court", ["All", "Court A", "Court B", "Court C"])
+
+    with col2:
+        type_filter = st.selectbox(
+            "Filter by Type", ["All", "Civil", "Criminal", "Family", "Labor"])
+
+    with col3:
+        date_filter = st.date_input("Select Date", None)
+
+    # Fetch Data from Database
+    df = fetch_judgments(search_query, court_filter, type_filter, date_filter)
+
+    # Display Data
+    st.dataframe(df, hide_index=True, use_container_width=True)
