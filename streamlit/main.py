@@ -1,8 +1,12 @@
 """The main page of the dashboard."""
-from components import dashboard_title, homepage_text
-from data_source import get_most_recent_judgments, get_db_connection, display_as_table, get_most_recent_judgment, display_judgment, get_random_judgment_with_summary_and_date
+
 from dotenv import load_dotenv
 import streamlit as st
+from components import dashboard_title, homepage_text
+from data_source import (get_most_recent_judgments,
+                         get_db_connection,
+                         display_as_table, get_most_recent_judgment, display_judgment,
+                         get_random_judgment_with_summary_and_date)
 
 def main():
     """Runs the complete scripts."""
