@@ -111,7 +111,7 @@ if __name__=="__main__":
     You are a lawyer reading judgment transcripts.
     Please analyse each case and return a summary for each.
 
-    Give me a summary for each of the cases provided. Your response should be in a list of dictionaries containing the following keys:
+    Give me a well rounded summary for each of the judgments provided. Your response should be in a list of dictionaries containing the following keys:
     - type_of_crime: criminal or civil 
     - description: a short neutral summary of the trial
     - judge: The fullname of the judge including the title e.g Mr Justice Smith
@@ -126,7 +126,7 @@ if __name__=="__main__":
             - A brief summary of the argument presented
             - a list of references(neutral citations) that are mentioned in that specific argument
             - a list of legislations that are mentioned in that specific argument
-            - legislations have a legislation name and section for example Data Protection Act 2018 Section 17, if no section is specified then label as All
+            - legislations have a legislation name and section for example Data Protection Act 2018 Section 17
 
 
 
