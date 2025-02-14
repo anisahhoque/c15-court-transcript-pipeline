@@ -112,7 +112,8 @@ def get_random_judgment_with_summary_and_date(_conn:connection) -> dict:
 # Function to fetch judgment data
 
 
-def fetch_judgments(_conn, search_query="", court=None, case_type=None, judgment_date=None):
+def fetch_judgments(search_query="", court=None, case_type=None, judgment_date=None):
+    conn = get_db_connection()
     query = """
         SELECT j.neutral_citation, j.judgement_date, a.summary AS argument_summary, c.court_name
         FROM judgment j
@@ -137,7 +138,7 @@ def fetch_judgments(_conn, search_query="", court=None, case_type=None, judgment
         query += " AND " + " AND ".join(filters)
 
     # Execute query and fetch results
-    with _conn.cursor() as cursor:
+    with conn.cursor() as cursor:
         cursor.execute(query)
         result = cursor.fetchall()
 
@@ -154,15 +155,13 @@ def display_judgment_search():
     search_query = st.text_input("🔍 Search a Judgment", "")
 
     col1, col2, col3 = st.columns([1, 1, 2])
-
+    
     with col1:
-        court_filter = st.selectbox(
-            "Filter by Court", ["All", "Court A", "Court B", "Court C"])
-
+        court_filter = st.selectbox("Filter by Court", ["All", "Court A", "Court B", "Court C"])
+    
     with col2:
-        type_filter = st.selectbox(
-            "Filter by Type", ["All", "Civil", "Criminal", "Family", "Labor"])
-
+        type_filter = st.selectbox("Filter by Type", ["All", "Civil", "Criminal", "Family", "Labor"])
+    
     with col3:
         date_filter = st.date_input("Select Date", None)
 
