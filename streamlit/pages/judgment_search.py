@@ -8,7 +8,7 @@ from data_source import fetch_judgments, get_db_connection, display_judgment_sea
 def main():
     dashboard_title()
     conn = get_db_connection()
-    display_judgment_search()
+    display_judgment_search(conn)
 
 
 

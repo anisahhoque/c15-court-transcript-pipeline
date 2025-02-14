@@ -86,6 +86,7 @@ def display_judgment(judgment_data:dict) -> None:
     else:
         st.write("No judgment found.")
 
+@st.cache_resource
 def get_random_judgment_with_summary_and_date(_conn:connection) -> dict:
     """Returns a random judgment from the database."""
     try:
@@ -109,10 +110,9 @@ def get_random_judgment_with_summary_and_date(_conn:connection) -> dict:
         return None
 
 
-
-def fetch_judgments(search_query="", court=None, case_type=None, judgment_date=None) -> pd.DataFrame:
+@st.cache_resource
+def fetch_judgments(_conn:connection,search_query="", court=None, case_type=None, judgment_date=None) -> pd.DataFrame:
     """Returns all judgments from the database."""
-    conn = get_db_connection()
     query = """
         SELECT j.neutral_citation, j.judgement_date, a.summary AS argument_summary, c.court_name
         FROM judgment j
@@ -134,7 +134,7 @@ def fetch_judgments(search_query="", court=None, case_type=None, judgment_date=N
     if filters:
         query += " AND " + " AND ".join(filters)
 
-    with conn.cursor() as cursor:
+    with _conn.cursor() as cursor:
         cursor.execute(query)
         result = cursor.fetchall()
 
@@ -145,7 +145,7 @@ def fetch_judgments(search_query="", court=None, case_type=None, judgment_date=N
     return df
 
 
-def display_judgment_search() -> None:
+def display_judgment_search(conn:connection) -> None:
     """Displays the interface for Judgment Search Page on streamlit."""
     search_query = st.text_input("🔍 Search a Judgment", "")
 
@@ -160,5 +160,5 @@ def display_judgment_search() -> None:
     with col3:
         date_filter = st.date_input("Select Date", None)
 
-    df = fetch_judgments(search_query, court_filter, type_filter, date_filter)
+    df = fetch_judgments(conn, search_query, court_filter, type_filter, date_filter)
     st.dataframe(df, hide_index=True, use_container_width=True)
