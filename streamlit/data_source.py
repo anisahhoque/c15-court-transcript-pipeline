@@ -254,12 +254,10 @@ def fetch_case_overview(conn:connection, neutral_citation:str) -> dict:
         return case_overview
 
 
-def fetch_parties_involved(conn: connection, neutral_citation: str) -> dict:
+def fetch_parties_involved(_conn: connection, neutral_citation: str) -> dict:
     """
-    Fetches parties involved in a case given the neutral citation.
     Returns a dictionary mapping role types to lists of party names.
     """
-    print(neutral_citation)
     query = """
         SELECT r.role_name, p.party_name
         FROM party p
@@ -271,7 +269,7 @@ def fetch_parties_involved(conn: connection, neutral_citation: str) -> dict:
     parties_involved = {}
 
     try:
-        with conn.cursor() as cur:
+        with _conn.cursor() as cur:
             cur.execute(query, (neutral_citation,))
             results = cur.fetchall()
 

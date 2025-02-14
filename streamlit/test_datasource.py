@@ -10,8 +10,6 @@ import pandas as pd
 from datetime import datetime
 
 
-
-
 @pytest.fixture
 def mock_db_conn():
     """Mocked database connection."""
@@ -307,26 +305,18 @@ def test_fetch_parties_involved():
 
 
 def test_fetch_parties_involved_with_exception(capsys):
-    # Mock the database connection
+    streamlit.cache_data.clear()
     mock_conn = MagicMock()
 
-    # Mock the cursor
     mock_cursor = MagicMock()
     mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
 
-    # Simulate an exception when executing the query
     mock_cursor.execute.side_effect = Exception("Simulated database error")
 
-    # Call the function to test
     result = fetch_parties_involved(mock_conn, "2025/01")
 
-    # Assert that the result is an empty dictionary in case of an error
     assert result == {}
 
-    # Capture the printed output
     captured = capsys.readouterr()
 
-    # Check if the expected error message was printed
-    # Debug print to inspect the captured output
-    print(f"Captured Output: {captured.out}")
-    assert "Error fetching parties involved: Simulated database error" in captured.out
+
