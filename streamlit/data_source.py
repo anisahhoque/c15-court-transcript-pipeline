@@ -173,14 +173,12 @@ def display_judgment_search(conn: connection) -> None:
     with col3:
         date_filter = st.date_input("Select Date", None)
 
-    # Fetching the filtered judgment results
     df = fetch_judgments(conn, search_query, court_filter,
                          type_filter, date_filter)
 
     if not df.empty:
         st.dataframe(df, hide_index=True, use_container_width=True)
 
-        # Select a judgment from the results
         selected_citation = st.selectbox(
             "Select a Judgment", df["neutral_citation"])
 
@@ -221,7 +219,6 @@ def fetch_case_overview(conn:connection, neutral_citation:str) -> dict:
         result = cursor.fetchone()
 
     if result:
-        # Combine the judge's title and name into one field
         judge_full_name = f"{result.get('judge_title', 'N/A')} {result.get('judge', 'N/A')}"
 
         case_overview = {

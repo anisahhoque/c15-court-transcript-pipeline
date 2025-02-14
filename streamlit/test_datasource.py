@@ -172,7 +172,6 @@ def mock_session_state():
         yield mock
 
 def test_fetch_judgments_called_with_correct_arguments(mock_session_state, mock_connect, mock_date_input, mock_selectbox, mock_text_input, mock_fetch_judgments):
-    # Setting up mock return values
     mock_text_input.return_value = "Search term"
     mock_selectbox.side_effect = ["Court A", "Civil"]
     mock_date_input.return_value = "2025-02-01"
@@ -191,26 +190,21 @@ def test_fetch_judgments_called_with_correct_arguments(mock_session_state, mock_
 @patch("streamlit.selectbox")
 @patch("streamlit.date_input")
 @patch("streamlit.dataframe")
-@patch("streamlit.write")  # Patch st.write here
+@patch("streamlit.write")
 @patch("data_source.fetch_judgments")
 @patch("data_source.fetch_case_overview")
 def test_display_judgment_search_no_results(
     mock_fetch_case_overview, mock_fetch_judgments, mock_data_frame, mock_write,
     mock_date_input, mock_selectbox, mock_text_input
 ):
-    """Test case when no judgments are found"""
 
     mock_text_input.return_value = "Search term"
-    mock_selectbox.side_effect = ["Court A", "Civil"]  # Filter values
+    mock_selectbox.side_effect = ["Court A", "Civil"]
     mock_date_input.return_value = None
     
-    # Mocking the fetch_judgments to return an empty DataFrame
     mock_fetch_judgments.return_value = pd.DataFrame()
-    
-    # Mocking the database connection
     mock_db_conn = MagicMock()
 
-    # Call the function to test
     display_judgment_search(mock_db_conn)
 
     mock_data_frame.assert_called_once()
@@ -220,21 +214,19 @@ def test_display_judgment_search_no_results(
 @patch("streamlit.selectbox")
 @patch("streamlit.date_input")
 @patch("streamlit.dataframe")
-@patch("streamlit.write")  # Patch st.write here
+@patch("streamlit.write") 
 @patch("data_source.fetch_judgments")
 @patch("data_source.fetch_case_overview")
 def test_display_judgment_search_with_results(
     mock_fetch_case_overview, mock_fetch_judgments, mock_data_frame, mock_write,
     mock_date_input, mock_selectbox, mock_text_input
 ):
-    """Test case when judgment search returns results"""
 
     # Mocking Streamlit inputs
     mock_text_input.return_value = "Search term"
-    mock_selectbox.return_value = "Citation 1"  # Mocking the selected citation
-    mock_date_input.return_value = None  # No date filter
+    mock_selectbox.return_value = "Citation 1"
+    mock_date_input.return_value = None
 
-    # Mocking the fetch_judgments to return a non-empty DataFrame
     df = pd.DataFrame({
         "neutral_citation": ["Citation 1", "Citation 2"],
         "court_name": ["Court A", "Court B"],
@@ -252,18 +244,16 @@ def test_display_judgment_search_with_results(
 
     display_judgment_search(mock_db_conn)
 
-# Ensure the correct patch path for the 'psycopg2.connect' function
 
 
 @patch("psycopg2.connect")
 def test_fetch_case_overview_success(mock_connect):
-    # Create a mock connection and cursor
+
     mock_conn = MagicMock()
     mock_cursor = MagicMock()
 
     mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
 
-    # Create a mock row that will return data when .get() is called
     mock_row = {
         'case_number': '12345',
         'judgement_date': datetime(2025, 2, 14),
@@ -272,24 +262,18 @@ def test_fetch_case_overview_success(mock_connect):
         'judge': 'Judge 1',
         'judge_title': 'Mr.'
     }
-
-    # Mock the fetchone() to return the mock_row when called
     mock_cursor.fetchone.return_value = mock_row
 
-    # Set up the mock for psycopg2.connect to return mock_conn
     mock_connect.return_value = mock_conn
 
-    # Now, call the function you're testing
     result = fetch_case_overview(mock_conn, "Citation 1")
 
-
-    # Expected result
     expected = {
         "Judgment Number": "12345",
-        "Judgment Date": "2025-02-14",  # Date should be in the correct format
+        "Judgment Date": "2025-02-14",
         "Court": "Court A",
         "Neutral Citation": "Citation 1",
-        "Judge": "Mr. Judge 1"  # Title and name combined as expected
+        "Judge": "Mr. Judge 1"
     }
 
     assert result == expected
