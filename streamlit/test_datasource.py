@@ -1,7 +1,13 @@
+from unittest.mock import MagicMock
+import psycopg2
 import pytest
 from unittest.mock import MagicMock, patch
 import data_source
-import streamlit as st
+import streamlit
+from data_source import display_judgment_search, fetch_judgments, fetch_case_overview
+import pandas as pd
+from datetime import datetime
+
 
 
 
@@ -134,59 +140,157 @@ def test_fetch_judgments_empty_result(mock_db_conn):
     assert df.empty
 
 
-@patch("data_source.fetch_judgments")
-@patch("streamlit.text_input")
-@patch("streamlit.selectbox")
-@patch("streamlit.date_input")
-@patch("psycopg2.connect")
-def test_streamlit_input_fields(mock_connect, mock_date_input, mock_selectbox, mock_text_input, mock_fetch_judgments):
-    mock_text_input.return_value = "Search term"
-    mock_selectbox.side_effect = ["Court A", "Civil"]
-    mock_date_input.return_value = "2025-02-01"
 
-    mock_db_conn = MagicMock()
-    mock_cursor = MagicMock()
-    mock_db_conn.cursor.return_value.__enter__.return_value = mock_cursor
-    mock_connect.return_value = mock_db_conn
+@pytest.fixture
+def mock_connect():
+    with patch("psycopg2.connect") as mock:
+        yield mock
 
-    mock_fetch_judgments.return_value = [
-        {"neutral_citation": "Case1", "judgement_date": "2025-01-01",
-            "argument_summary": "Summary 1", "court_name": "Court A"},
-        {"neutral_citation": "Case2", "judgement_date": "2025-02-01",
-            "argument_summary": "Summary 2", "court_name": "Court B"}
-    ]
-    data_source.display_judgment_search(mock_db_conn)
+@pytest.fixture
+def mock_fetch_judgments():
+    with patch("data_source.fetch_judgments") as mock:
+        yield mock
 
-    mock_fetch_judgments.assert_called_once_with(
-        mock_db_conn, "Search term", "Court A", "Civil", "2025-02-01")
-@patch("data_source.fetch_judgments")
-@patch("streamlit.text_input")
-@patch("streamlit.selectbox")
-@patch("streamlit.date_input")
-@patch("psycopg2.connect")
-@patch("streamlit.session_state", new_callable=MagicMock)
+@pytest.fixture
+def mock_date_input():
+    with patch("streamlit.date_input") as mock:
+        yield mock
+
+@pytest.fixture
+def mock_selectbox():
+    with patch("streamlit.selectbox") as mock:
+        yield mock
+
+@pytest.fixture
+def mock_text_input():
+    with patch("streamlit.text_input") as mock:
+        yield mock
+
+@pytest.fixture
+def mock_session_state():
+    with patch("streamlit.session_state", new_callable=MagicMock) as mock:
+        yield mock
+
 def test_fetch_judgments_called_with_correct_arguments(mock_session_state, mock_connect, mock_date_input, mock_selectbox, mock_text_input, mock_fetch_judgments):
+    # Setting up mock return values
     mock_text_input.return_value = "Search term"
     mock_selectbox.side_effect = ["Court A", "Civil"]
     mock_date_input.return_value = "2025-02-01"
-
+    
     mock_session_state.search_query = "Search term"
     mock_session_state.court_filter = "Court A"
     mock_session_state.type_filter = "Civil"
     mock_session_state.date_filter = "2025-02-01"
-
+    
     mock_db_conn = MagicMock()
     mock_cursor = MagicMock()
     mock_db_conn.cursor.return_value.__enter__.return_value = mock_cursor
     mock_connect.return_value = mock_db_conn
+    
+@patch("streamlit.text_input")
+@patch("streamlit.selectbox")
+@patch("streamlit.date_input")
+@patch("streamlit.dataframe")
+@patch("streamlit.write")  # Patch st.write here
+@patch("data_source.fetch_judgments")
+@patch("data_source.fetch_case_overview")
+def test_display_judgment_search_no_results(
+    mock_fetch_case_overview, mock_fetch_judgments, mock_data_frame, mock_write,
+    mock_date_input, mock_selectbox, mock_text_input
+):
+    """Test case when no judgments are found"""
 
-    mock_fetch_judgments.return_value = [
-        {"neutral_citation": "Case1", "judgement_date": "2025-01-01",
-            "argument_summary": "Summary 1", "court_name": "Court A"},
-        {"neutral_citation": "Case2", "judgement_date": "2025-02-01",
-            "argument_summary": "Summary 2", "court_name": "Court B"}
-    ]
-    data_source.display_judgment_search(mock_db_conn)
+    mock_text_input.return_value = "Search term"
+    mock_selectbox.side_effect = ["Court A", "Civil"]  # Filter values
+    mock_date_input.return_value = None
+    
+    # Mocking the fetch_judgments to return an empty DataFrame
+    mock_fetch_judgments.return_value = pd.DataFrame()
+    
+    # Mocking the database connection
+    mock_db_conn = MagicMock()
 
-    mock_fetch_judgments.assert_called_once_with(
-        mock_db_conn, "Search term", "Court A", "Civil", "2025-02-01")
+    # Call the function to test
+    display_judgment_search(mock_db_conn)
+
+    mock_data_frame.assert_called_once()
+
+
+@patch("streamlit.text_input")
+@patch("streamlit.selectbox")
+@patch("streamlit.date_input")
+@patch("streamlit.dataframe")
+@patch("streamlit.write")  # Patch st.write here
+@patch("data_source.fetch_judgments")
+@patch("data_source.fetch_case_overview")
+def test_display_judgment_search_with_results(
+    mock_fetch_case_overview, mock_fetch_judgments, mock_data_frame, mock_write,
+    mock_date_input, mock_selectbox, mock_text_input
+):
+    """Test case when judgment search returns results"""
+
+    # Mocking Streamlit inputs
+    mock_text_input.return_value = "Search term"
+    mock_selectbox.return_value = "Citation 1"  # Mocking the selected citation
+    mock_date_input.return_value = None  # No date filter
+
+    # Mocking the fetch_judgments to return a non-empty DataFrame
+    df = pd.DataFrame({
+        "neutral_citation": ["Citation 1", "Citation 2"],
+        "court_name": ["Court A", "Court B"],
+        "judgment_name": ["Judgment 1", "Judgment 2"]
+    })
+    mock_fetch_judgments.return_value = df
+    mock_fetch_case_overview.return_value = {
+        "Court Name": "Court A",
+        "Judgment Name": "Judgment 1",
+        "Judgment Date": "2025-02-14",
+        "Presiding Judge(s)": "Judge 1"
+    }
+
+    mock_db_conn = MagicMock()
+
+    display_judgment_search(mock_db_conn)
+
+# Ensure the correct patch path for the 'psycopg2.connect' function
+
+
+@patch("psycopg2.connect")
+def test_fetch_case_overview_success(mock_connect):
+    # Create a mock connection and cursor
+    mock_conn = MagicMock()
+    mock_cursor = MagicMock()
+
+    mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
+
+    # Create a mock row that will return data when .get() is called
+    mock_row = {
+        'case_number': '12345',
+        'judgement_date': datetime(2025, 2, 14),
+        'court': 'Court A',
+        'neutral_citation': 'Citation 1',
+        'judge': 'Judge 1',
+        'judge_title': 'Mr.'
+    }
+
+    # Mock the fetchone() to return the mock_row when called
+    mock_cursor.fetchone.return_value = mock_row
+
+    # Set up the mock for psycopg2.connect to return mock_conn
+    mock_connect.return_value = mock_conn
+
+    # Now, call the function you're testing
+    result = fetch_case_overview(mock_conn, "Citation 1")
+
+
+    # Expected result
+    expected = {
+        "Judgment Number": "12345",
+        "Judgment Date": "2025-02-14",  # Date should be in the correct format
+        "Court": "Court A",
+        "Neutral Citation": "Citation 1",
+        "Judge": "Mr. Judge 1"  # Title and name combined as expected
+    }
+
+    assert result == expected
+

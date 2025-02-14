@@ -111,7 +111,8 @@ def get_random_judgment_with_summary_and_date(_conn:connection) -> dict:
 
 
 @st.cache_resource
-def fetch_judgments(_conn:connection,search_query="", court=None, case_type=None, judgment_date=None) -> pd.DataFrame:
+def fetch_judgments(_conn: connection, search_query="",
+court=None, case_type=None, judgment_date=None) -> pd.DataFrame:
     """Returns all judgments from the database."""
     query = """
         SELECT j.neutral_citation, j.judgement_date, a.summary AS argument_summary, c.court_name
@@ -121,21 +122,31 @@ def fetch_judgments(_conn:connection,search_query="", court=None, case_type=None
         WHERE 1=1
     """
     filters = []
+    params = []
+
     if search_query:
         filters.append(
-            f"j.neutral_citation LIKE '%{search_query}%' OR a.summary LIKE '%{search_query}%'")
+            f"(j.neutral_citation LIKE %s OR a.summary LIKE %s)"
+        )
+        params.extend([f"%{search_query}%", f"%{search_query}%"])
+
     if court and court != "All":
-        filters.append(f"c.court_name = '{court}'")
+        filters.append("c.court_name = %s")
+        params.append(court)
+
     if case_type and case_type != "All":
-        filters.append(f"a.summary LIKE '%{case_type}%'")
+        filters.append("a.summary LIKE %s")
+        params.append(f"%{case_type}%")
+
     if judgment_date:
-        filters.append(f"j.judgement_date = '{judgment_date}'")
+        filters.append("j.judgement_date = %s")
+        params.append(judgment_date)
 
     if filters:
         query += " AND " + " AND ".join(filters)
 
     with _conn.cursor() as cursor:
-        cursor.execute(query)
+        cursor.execute(query, tuple(params))
         result = cursor.fetchall()
 
     columns = ["neutral_citation", "judgement_date",
@@ -145,20 +156,83 @@ def fetch_judgments(_conn:connection,search_query="", court=None, case_type=None
     return df
 
 
-def display_judgment_search(conn:connection) -> None:
-    """Displays the interface for Judgment Search Page on streamlit."""
+def display_judgment_search(conn: connection) -> None:
+    """Displays the interface for Judgment Search Page on Streamlit."""
     search_query = st.text_input("🔍 Search a Judgment", "")
 
     col1, col2, col3 = st.columns([1, 1, 2])
-    
+
     with col1:
-        court_filter = st.selectbox("Filter by Court", ["All", "Court A", "Court B", "Court C"])
-    
+        court_filter = st.selectbox(
+            "Filter by Court", ["All", "Court A", "Court B", "Court C"])
+
     with col2:
-        type_filter = st.selectbox("Filter by Type", ["All", "Civil", "Criminal", "Family", "Labor"])
-    
+        type_filter = st.selectbox(
+            "Filter by Type", ["All", "Civil", "Criminal", "Family", "Labor"])
+
     with col3:
         date_filter = st.date_input("Select Date", None)
 
-    df = fetch_judgments(conn, search_query, court_filter, type_filter, date_filter)
-    st.dataframe(df, hide_index=True, use_container_width=True)
+    # Fetching the filtered judgment results
+    df = fetch_judgments(conn, search_query, court_filter,
+                         type_filter, date_filter)
+
+    if not df.empty:
+        st.dataframe(df, hide_index=True, use_container_width=True)
+
+        # Select a judgment from the results
+        selected_citation = st.selectbox(
+            "Select a Judgment", df["neutral_citation"])
+
+        if selected_citation:
+            case_overview = fetch_case_overview(conn, selected_citation)
+
+            if case_overview:
+                st.write("### Case Overview")
+                for key, value in case_overview.items():
+                    st.write(f"**{key}:** {value}")
+            else:
+                st.write("No detailed overview available for this judgment.")
+    else:
+        st.write("No results found for your search.")
+
+
+
+def fetch_case_overview(conn:connection, neutral_citation:str) -> dict:
+    """Returns the overview of a selected judgment, including the judge's title and name."""
+    query = """
+        SELECT 
+            c.case_number,
+            j.judgement_date,
+            c2.court_name AS court,
+            j.neutral_citation,
+            j1.judge_name AS judge,
+            t.title_name AS judge_title
+        FROM judgment j
+        LEFT JOIN "case" c ON j.neutral_citation = c.neutral_citation
+        LEFT JOIN court c2 ON j.court_id = c2.court_id
+        LEFT JOIN judge j1 ON j.neutral_citation = j1.neutral_citation
+        LEFT JOIN title t ON j1.title_id = t.title_id
+        LEFT JOIN argument a ON j.neutral_citation = a.neutral_citation
+        WHERE j.neutral_citation = %s;
+    """
+    with conn.cursor() as cursor:
+        cursor.execute(query, (neutral_citation,))
+        result = cursor.fetchone()
+
+    if result:
+        # Combine the judge's title and name into one field
+        judge_full_name = f"{result.get('judge_title', 'N/A')} {result.get('judge', 'N/A')}"
+
+        case_overview = {
+            "Judgment Number": result.get('case_number', "N/A"),
+            "Judgment Date": result.get('judgement_date', "N/A").strftime('%Y-%m-%d')
+            if result.get('judgement_date') else "N/A",
+            "Court": result.get('court', "N/A"),
+            "Neutral Citation": result.get('neutral_citation', "N/A"),
+            "Judge": judge_full_name
+        }
+        return case_overview
+
+
+
