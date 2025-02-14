@@ -39,7 +39,7 @@ def get_most_recent_judgments(_conn:connection) -> list[dict]:
 
 def display_as_table(results: list) -> None:
     """Converts a list of dictionaries into a Pandas DataFrame,
-    capitalizes the column titles, and displays it as a table in Streamlit."""
+    capitalises the column titles, and displays it as a table in Streamlit."""
     df = pd.DataFrame(results)
 
     df.columns = [col.capitalize() for col in df.columns]
@@ -74,12 +74,11 @@ def get_most_recent_judgment(_conn:connection) -> dict:
 
 
 def display_judgment(judgment_data:dict) -> None:
-    """Displays data onto stream from passed dictionary."""
+    """Displays data onto streamlit from passed dictionary."""
     neutral_citation = judgment_data.get("neutral_citation")
     argument_summary = judgment_data.get("argument_summary")
     judgment_date = judgment_data.get("judgement_date")
 
-    # If we have a result, display it
     if neutral_citation and argument_summary:
         st.subheader(neutral_citation)
         st.text(judgment_date)
@@ -87,8 +86,9 @@ def display_judgment(judgment_data:dict) -> None:
     else:
         st.write("No judgment found.")
 
+@st.cache_resource
 def get_random_judgment_with_summary_and_date(_conn:connection) -> dict:
-    """Returns a random judgment from the db."""
+    """Returns a random judgment from the database."""
     try:
         with _conn.cursor() as cur:
             query = """
@@ -109,11 +109,10 @@ def get_random_judgment_with_summary_and_date(_conn:connection) -> dict:
         print(f"Error: {e}")
         return None
 
-# Function to fetch judgment data
 
-
-def fetch_judgments(search_query="", court=None, case_type=None, judgment_date=None):
-    conn = get_db_connection()
+@st.cache_resource
+def fetch_judgments(_conn:connection,search_query="", court=None, case_type=None, judgment_date=None) -> pd.DataFrame:
+    """Returns all judgments from the database."""
     query = """
         SELECT j.neutral_citation, j.judgement_date, a.summary AS argument_summary, c.court_name
         FROM judgment j
@@ -121,8 +120,6 @@ def fetch_judgments(search_query="", court=None, case_type=None, judgment_date=N
         LEFT JOIN court c ON j.court_id = c.court_id
         WHERE 1=1
     """
-
-    # Apply filters dynamically
     filters = []
     if search_query:
         filters.append(
@@ -137,12 +134,10 @@ def fetch_judgments(search_query="", court=None, case_type=None, judgment_date=N
     if filters:
         query += " AND " + " AND ".join(filters)
 
-    # Execute query and fetch results
-    with conn.cursor() as cursor:
+    with _conn.cursor() as cursor:
         cursor.execute(query)
         result = cursor.fetchall()
 
-    # Convert results to DataFrame
     columns = ["neutral_citation", "judgement_date",
                "argument_summary", "court_name"]
     df = pd.DataFrame(result, columns=columns)
@@ -150,8 +145,8 @@ def fetch_judgments(search_query="", court=None, case_type=None, judgment_date=N
     return df
 
 
-def display_judgment_search():
-    # Search and Filters
+def display_judgment_search(conn:connection) -> None:
+    """Displays the interface for Judgment Search Page on streamlit."""
     search_query = st.text_input("🔍 Search a Judgment", "")
 
     col1, col2, col3 = st.columns([1, 1, 2])
@@ -165,8 +160,5 @@ def display_judgment_search():
     with col3:
         date_filter = st.date_input("Select Date", None)
 
-    # Fetch Data from Database
-    df = fetch_judgments(search_query, court_filter, type_filter, date_filter)
-
-    # Display Data
+    df = fetch_judgments(conn, search_query, court_filter, type_filter, date_filter)
     st.dataframe(df, hide_index=True, use_container_width=True)
