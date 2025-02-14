@@ -6,11 +6,31 @@ resource "aws_db_subnet_group" "default" {
   ]
 }
 
+resource "aws_security_group" "main_database" {
+  name = "judgment-reader-main-database"
+  vpc_id = aws_vpc.main.id
+
+  ingress {
+    from_port = 5432
+    to_port = 5432 
+    protocol = "tcp"
+    cidr_blocks = ["10.0.0.0/16"]
+  }
+
+
+  egress {
+    from_port = 5432
+    to_port = 5432 
+    protocol = "tcp"
+    cidr_blocks = ["10.0.0.0/16"]
+  }
+} 
+
 resource "aws_db_instance" "main" {
   allocated_storage = 20
   engine = "postgres"
   engine_version = "17"
-  identifier = "c15-judgment-reader"
+  identifier = "judgment-reader"
   instance_class = "db.t4g.micro"
   storage_encrypted = false
   publicly_accessible = false 
