@@ -1,10 +1,11 @@
+from data_source import fetch_parties_involved
 from unittest.mock import MagicMock
 import psycopg2
 import pytest
 from unittest.mock import MagicMock, patch
 import data_source
 import streamlit
-from data_source import display_judgment_search, fetch_judgments, fetch_case_overview
+from data_source import display_judgment_search, fetch_judgments, fetch_case_overview, fetch_parties_involved
 import pandas as pd
 from datetime import datetime
 
@@ -278,3 +279,71 @@ def test_fetch_case_overview_success(mock_connect):
 
     assert result == expected
 
+
+def test_fetch_parties_involved():
+    mock_conn = MagicMock()
+
+    mock_cursor = MagicMock()
+    mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
+
+    mock_cursor.fetchall.return_value = [
+        {"role_name": "Claimant", "party_name": "John Doe"},
+        {"role_name": "Claimant", "party_name": "Jane Smith"},
+        {"role_name": "Defendant", "party_name": "Company X"}
+    ]
+
+    result = fetch_parties_involved(mock_conn, "2025/01")
+
+    print("Result:", result)
+
+
+    expected_result = {
+        "Claimant": ["John Doe", "Jane Smith"],
+        "Defendant": ["Company X"]
+    }
+
+    assert result == expected_result
+
+
+def test_fetch_parties_involved_with_exceptions():
+    # Mock the database connection
+    mock_conn = MagicMock()
+
+    # Mock the cursor
+    mock_cursor = MagicMock()
+    mock_conn.cursor.return_value = mock_cursor
+
+    # Simulate an exception when executing the query
+    mock_cursor.execute.side_effect = Exception("Simulated database error")
+
+    # Call the function to test
+    result = fetch_parties_involved(mock_conn, "2025/01")
+
+    # Assert that the result is an empty dictionary in case of an error
+    assert result == {}
+
+
+def test_fetch_parties_involved_with_exception(capsys):
+    # Mock the database connection
+    mock_conn = MagicMock()
+
+    # Mock the cursor
+    mock_cursor = MagicMock()
+    mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
+
+    # Simulate an exception when executing the query
+    mock_cursor.execute.side_effect = Exception("Simulated database error")
+
+    # Call the function to test
+    result = fetch_parties_involved(mock_conn, "2025/01")
+
+    # Assert that the result is an empty dictionary in case of an error
+    assert result == {}
+
+    # Capture the printed output
+    captured = capsys.readouterr()
+
+    # Check if the expected error message was printed
+    # Debug print to inspect the captured output
+    print(f"Captured Output: {captured.out}")
+    assert "Error fetching parties involved: Simulated database error" in captured.out
