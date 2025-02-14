@@ -305,23 +305,6 @@ def test_fetch_parties_involved():
     assert result == expected_result
 
 
-def test_fetch_parties_involved_with_exceptions():
-    # Mock the database connection
-    mock_conn = MagicMock()
-
-    # Mock the cursor
-    mock_cursor = MagicMock()
-    mock_conn.cursor.return_value = mock_cursor
-
-    # Simulate an exception when executing the query
-    mock_cursor.execute.side_effect = Exception("Simulated database error")
-
-    # Call the function to test
-    result = fetch_parties_involved(mock_conn, "2025/01")
-
-    # Assert that the result is an empty dictionary in case of an error
-    assert result == {}
-
 
 def test_fetch_parties_involved_with_exception(capsys):
     # Mock the database connection
