@@ -181,3 +181,6 @@ cython_debug/
 # judgements
 judgements
 
+seed.sql
+test.sh
+db_connection.sh
