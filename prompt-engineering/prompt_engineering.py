@@ -1,15 +1,12 @@
 """This file extracts data from xmls using OpenAI API"""
 import json
 import logging
-
 from os import environ as ENV
 from dotenv import load_dotenv
 from openai import OpenAI, OpenAIError
 from pydantic import BaseModel
 
 load_dotenv()
-
-
 
 class Judge(BaseModel):
     """Represents a judge involved in a legal case."""
@@ -24,14 +21,11 @@ class Judgment(BaseModel):
     """Reference/unique id for a judgment"""
     neutral_citation: str
 
-
-
 class Counsel(BaseModel):
     """Represents a counsel for a party"""
     counsel_name: str
     counsel_title: str
     chamber_name: str
-
 
 class Party(BaseModel):
     """Represents a party involved in a legal case."""
@@ -39,13 +33,12 @@ class Party(BaseModel):
     party_role: str
     counsels: list[Counsel]
 
-
 class Argument(BaseModel):
+    """Represents an argument made by a party role"""
     summary: str
     judgments_referenced: list[Judgment]
     legislations_referenced: list[Legislation]
     party_role: str
-
 
 class CaseOutput(BaseModel):
     """All details to be extracted from the xmls"""
@@ -54,6 +47,7 @@ class CaseOutput(BaseModel):
     judge: list[Judge]
     parties: list[Party]
     arguments: list[Argument]
+    ruling: str
 
 class JudgmentOutput(BaseModel):
     """Returns all information in a case summary"""
@@ -70,6 +64,7 @@ def get_client() -> OpenAI:
         return client
     except OpenAIError as e:
         logging.error('Failed to return an OpenAI client - %s', str(e))
+        
 
 
 def get_list_xml_data(filenames: list[str]) -> list[str]:
@@ -98,17 +93,19 @@ def get_case_summaries(model: str, client: OpenAI, prompt: str) -> list[dict]:
 
         with open('gpt2_response.json','w', encoding='utf-8') as file:
             json.dump(data, file, indent=4)
-            
+
         return data
 
     except OpenAIError as e:
         logging.error('An error occurred while trying to retrieve case information - %s', str(e))
+        return []
 
 if __name__=="__main__":
     api_client = get_client()
     GPT_MODEL = "o3-mini"
-    file_names = ['ewhc_comm_2025_240.xml','ukut_iac_2021_202.xml','ewcop_t3_2025_6.xml', 'ewhc_kb_2025_287.xml']
-    list_of_cases = get_list_xml_data(filenames=[file_names[3]])
+    file_names = ['ewhc_comm_2025_240.xml','ukut_iac_2021_202.xml',
+                  'ewcop_t3_2025_6.xml', 'ewhc_kb_2025_287.xml']
+    list_of_cases = get_list_xml_data(filenames=[file_names[2]])
     PROMPT = f"""
     I have a list of court case transcriptions:
     {list_of_cases}
@@ -125,16 +122,14 @@ if __name__=="__main__":
             - name: The name of the counsel (e.g., "William Bennett KC").
             - title: The title of the counsel (e.g., "KC", "QC", or none).
             - chamber: The name of the counsel's chambers (e.g., "Brett Wilson LLP").
-    - arguments: a list of as many unique arguments as you can find made throughout the judgment that are made by the roles of which parties that you have found. Each argument contains:
+    - arguments: a list of as many distinct arguments as you can find made throughout the judgment that are made by the roles of which parties that you have found. Each argument contains:
                 - A brief summary of the argument presented
                 - A list of judgments that are mentioned in that specific argument. Use only their neutral citation number e.g., [2025] EWHC 287 (KB).
                 - a list of legislations that are mentioned in that specific argument
                 - legislations have a legislation name and section for example Data Protection Act 2018 Section 17
                 - can you assign the role
     - judge: The fullname of the judge including the title e.g Mr Justice Smith
-
-
-
+    - ruling: the party role in which the judgment is in favour of
 
 
     This MUST be a json and only be a list of dictionaries
