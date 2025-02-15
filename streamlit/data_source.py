@@ -158,17 +158,20 @@ court=None, case_type=None, judgment_date=None) -> pd.DataFrame:
 
 def display_judgment_search(conn: connection) -> None:
     """Displays the interface for Judgment Search Page on Streamlit."""
+
     search_query = st.text_input("🔍 Search a Judgment", "")
 
     col1, col2, col3 = st.columns([1, 1, 2])
 
     with col1:
         court_filter = st.selectbox(
-            "Filter by Court", ["All", "Court A", "Court B", "Court C"])
+            "Filter by Court", ["All", "Court A", "Court B", "Court C"]
+        )
 
     with col2:
         type_filter = st.selectbox(
-            "Filter by Type", ["All", "Civil", "Criminal", "Family", "Labor"])
+            "Filter by Type", ["All", "Civil", "Criminal", "Family", "Labor"]
+        )
 
     with col3:
         date_filter = st.date_input("Select Date", None)
@@ -180,19 +183,38 @@ def display_judgment_search(conn: connection) -> None:
         st.dataframe(df, hide_index=True, use_container_width=True)
 
         selected_citation = st.selectbox(
-            "Select a Judgment", df["neutral_citation"])
+            "Select a Judgment", df["neutral_citation"]
+        )
+
 
         if selected_citation:
-            case_overview = fetch_case_overview(conn, selected_citation)
+            col1, col2 = st.columns(2)  # Create two side-by-side columns
 
-            if case_overview:
-                st.write("### Case Overview")
-                for key, value in case_overview.items():
-                    st.write(f"**{key}:** {value}")
-            else:
-                st.write("No detailed overview available for this judgment.")
+            with col1:
+                case_overview = fetch_case_overview(conn, selected_citation)
+
+                if case_overview:
+                    st.write("### Case Overview")
+                    for key, value in case_overview.items():
+                        st.write(f"**{key}:** {value}")
+                else:
+                    st.write("No detailed overview available.")
+
+            with col2:
+                parties_involved = fetch_parties_involved(
+                    conn, selected_citation)
+
+                if parties_involved:
+                    st.write("### Parties Involved")
+                    for role, names in parties_involved.items():
+                        st.write(f"#### {role}(s)")  # Dynamic role heading
+                        for name in names:
+                            st.write(f"- {name}")
+                else:
+                    st.write("No party information available.")
     else:
         st.write("No results found for your search.")
+
 
 
 
@@ -232,4 +254,66 @@ def fetch_case_overview(conn:connection, neutral_citation:str) -> dict:
         return case_overview
 
 
+def fetch_parties_involved(_conn: connection, neutral_citation: str) -> dict:
+    """
+    Returns a dictionary mapping role types to lists of party names.
+    """
+    query = """
+        SELECT r.role_name, p.party_name
+        FROM party p
+        JOIN role r ON p.role_id = r.role_id
+        JOIN "case" c ON p.case_id = c.case_id
+        WHERE c.neutral_citation = %s;
+    """
+
+    parties_involved = {}
+
+    try:
+        with _conn.cursor() as cur:
+            cur.execute(query, (neutral_citation,))
+            results = cur.fetchall()
+
+            # Iterate over results and populate the dictionary
+            for row in results:
+                role = row['role_name']
+                party = row['party_name']
+
+                if role not in parties_involved:
+                    parties_involved[role] = []
+                parties_involved[role].append(party)
+
+
+    except Exception as e:
+        print(f"Error fetching parties involved: {e}")
+
+    return parties_involved
+
+
+def fetch_argument_summary(conn, neutral_citation: str):
+    """
+    Fetches the argument summary for a given neutral citation.
+    Args:
+        conn: The database connection.
+        neutral_citation: The neutral citation of the judgment.
+    Returns:
+        A list of summaries corresponding to the neutral citation.
+    """
+    query = """
+        SELECT a.summary
+        FROM argument a
+        WHERE a.neutral_citation = %s;
+    """
+
+    try:
+        with conn.cursor() as cur:
+            cur.execute(query, (neutral_citation,))
+            results = cur.fetchall()
+
+            # Extract summaries from the results
+            summaries = [row[0] for row in results]
+            return summaries
+
+    except Exception as e:
+        print(f"Error fetching argument summary: {e}")
+        return []
 
