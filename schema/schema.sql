@@ -74,3 +74,4 @@ CREATE TABLE counsel_assignment (
     CONSTRAINT fk_party FOREIGN KEY (party_id) REFERENCES party (party_id),
     CONSTRAINT fk_counsel FOREIGN KEY (counsel_id) REFERENCES counsel (counsel_id)
 );
+
