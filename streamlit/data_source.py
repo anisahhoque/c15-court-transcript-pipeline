@@ -1,13 +1,10 @@
 """This script gathers the data sourcing functions."""
-import datetime
-import random
 from os import environ as ENV
 from psycopg2 import connect
 from psycopg2.extras import RealDictCursor
 from psycopg2.extensions import connection
 import pandas as pd
 import streamlit as st
-from dotenv import load_dotenv
 
 
 
