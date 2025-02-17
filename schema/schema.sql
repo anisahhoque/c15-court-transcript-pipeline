@@ -1,3 +1,4 @@
+\c judgments
 DROP TABLE IF EXISTS argument_legislation;
 DROP TABLE IF EXISTS legislation_section;
 DROP TABLE IF EXISTS judgement_reference;
@@ -5,28 +6,14 @@ DROP TABLE IF EXISTS argument;
 DROP TABLE IF EXISTS counsel_assignment;
 DROP TABLE IF EXISTS party;
 DROP TABLE IF EXISTS judge;
-DROP TABLE IF EXISTS "case";
 DROP TABLE IF EXISTS counsel;
 DROP TABLE IF EXISTS judgment;
-DROP TABLE IF EXISTS title;
 DROP TABLE IF EXISTS legislation;
-DROP TABLE IF EXISTS chamber;
-DROP TABLE IF EXISTS court;
 DROP TABLE IF EXISTS role;
 
 CREATE TABLE role (
     role_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     role_name VARCHAR(10) NOT NULL
-);
-
-CREATE TABLE court (
-    court_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    court_name VARCHAR(100) NOT NULL
-);
-
-CREATE TABLE chamber (
-    chamber_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    chamber_name VARCHAR(30) NOT NULL
 );
 
 CREATE TABLE legislation (
@@ -35,7 +22,6 @@ CREATE TABLE legislation (
     link TEXT
 );
 
-
 CREATE TABLE judgment (
     neutral_citation VARCHAR(30) PRIMARY KEY,
     court_id INT NOT NULL,
@@ -43,15 +29,14 @@ CREATE TABLE judgment (
     judgment_summary TEXT NOT NULL,
     in_favour_of INT NOT NULL,
     judgment_type VARCHAR(20),
-    CONSTRAINT fk_court FOREIGN KEY (court_id) REFERENCES court (court_id),
+    court_name VARCHAR(100) NOT NULL,
     CONSTRAINT fk_in_favour_of FOREIGN KEY (in_favour_of) REFERENCES role (role_id)
 );
 
 CREATE TABLE counsel (
     counsel_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     counsel_name VARCHAR(100) NOT NULL,
-    chamber_id INT NOT NULL,
-    CONSTRAINT fk_chamber FOREIGN KEY (chamber_id) REFERENCES chamber (chamber_id)
+    chamber_name VARCHAR(30) NOT NULL
 );
 
 CREATE TABLE judge (
