@@ -1,10 +1,13 @@
 """This script gathers the data sourcing functions."""
+import datetime
+import random
 from os import environ as ENV
 from psycopg2 import connect
 from psycopg2.extras import RealDictCursor
 from psycopg2.extensions import connection
 import pandas as pd
 import streamlit as st
+from dotenv import load_dotenv
 
 
 
@@ -24,17 +27,24 @@ def get_db_connection() -> connection:
 
 
 @st.cache_resource
-def get_most_recent_judgments(_conn:connection) -> list[dict]:
-    """Returns the most recent cases from the database, returning them as a list of dictionaries."""
+def get_most_recent_judgments(_conn: connection) -> list[tuple]:
+    """Returns the most recent cases from the database, returning them as a list of tuples."""
 
-    query = """SELECT j.neutral_citation AS judgment, jd.judge_name AS judge, c.court_name as court
-                FROM judgment j
-                JOIN judge jd ON j.neutral_citation = jd.neutral_citation
-                JOIN court c ON j.court_id = c.court_id;"""
+    query = """
+    SELECT 
+        j.neutral_citation AS judgment, 
+        j.judge_name AS judge, 
+        c.court_name AS court,
+        jt.judgment_type AS judgment_type
+    FROM judgment j
+    JOIN court c ON j.court_id = c.court_id
+    JOIN judgment_type jt ON j.judgment_type_id = jt.judgment_type_id
+    ORDER BY j.judgment_date DESC;
+    """
 
     with _conn.cursor() as cur:
         cur.execute(query)
-        return cur.fetchall()  # This will return the results as a list of dictionaries
+        return cur.fetchall()
 
 
 def display_as_table(results: list) -> None:
@@ -49,53 +59,57 @@ def display_as_table(results: list) -> None:
     st.dataframe(df, hide_index=True, use_container_width=True)
 
 @st.cache_resource
-def get_most_recent_judgment(_conn:connection) -> dict:
-    """Returns latest story."""
-
-    query = """SELECT
-    j.neutral_citation, 
-    j.court_id, 
-    j.hearing_date, 
-    j.judgement_date, 
-    a.argument_id, 
-    a.summary AS argument_summary
+def get_most_recent_judgment(_conn: connection) -> dict:
+    """Returns the latest judgment with details."""
+    
+    query = """
+    SELECT
+        j.neutral_citation, 
+        j.court_id, 
+        j.judgment_date, 
+        j.judgment_summary
     FROM 
-    judgment j
-    JOIN 
-    argument a ON j.neutral_citation = a.neutral_citation
+        judgment j
     ORDER BY 
-    j.judgement_date DESC
+        j.judgment_date DESC
     LIMIT 1;
     """
-
+    
     with _conn.cursor() as cur:
         cur.execute(query)
-        return cur.fetchone()
+        return cur.fetchone()  # Returns the latest judgment record
+
+
 
 
 def display_judgment(judgment_data:dict) -> None:
     """Displays data onto streamlit from passed dictionary."""
     neutral_citation = judgment_data.get("neutral_citation")
-    argument_summary = judgment_data.get("argument_summary")
-    judgment_date = judgment_data.get("judgement_date")
+    judgment_summary = judgment_data.get("judgment_summary")
+    judgment_date = judgment_data.get("judgment_date")
 
-    if neutral_citation and argument_summary:
+    if neutral_citation and judgment_summary:
         st.subheader(neutral_citation)
+        st.text(judgment_summary)
         st.text(judgment_date)
-        st.text(argument_summary)
     else:
         st.write("No judgment found.")
 
-@st.cache_resource
-def get_random_judgment_with_summary_and_date(_conn:connection) -> dict:
-    """Returns a random judgment from the database."""
+
+@st.cache_resource(ttl=86400)  # 86400 seconds = 24 hours
+def get_random_judgment_with_summary_and_date(_conn: connection) -> dict:
+    """Returns a random judgment from the database each day."""
     try:
         with _conn.cursor() as cur:
             query = """
-            SELECT j.neutral_citation, a.summary AS argument_summary, j.judgement_date
-            FROM judgment j
-            JOIN argument a ON j.neutral_citation = a.neutral_citation
-            ORDER BY RANDOM()
+            SELECT 
+                j.neutral_citation, 
+                j.judgment_summary, 
+                j.judgment_date
+            FROM 
+                judgment j
+            ORDER BY 
+                RANDOM()
             LIMIT 1;
             """
             cur.execute(query)
@@ -108,6 +122,7 @@ def get_random_judgment_with_summary_and_date(_conn:connection) -> dict:
     except Exception as e:
         print(f"Error: {e}")
         return None
+
 
 
 @st.cache_resource
@@ -287,33 +302,3 @@ def fetch_parties_involved(_conn: connection, neutral_citation: str) -> dict:
         print(f"Error fetching parties involved: {e}")
 
     return parties_involved
-
-
-def fetch_argument_summary(conn, neutral_citation: str):
-    """
-    Fetches the argument summary for a given neutral citation.
-    Args:
-        conn: The database connection.
-        neutral_citation: The neutral citation of the judgment.
-    Returns:
-        A list of summaries corresponding to the neutral citation.
-    """
-    query = """
-        SELECT a.summary
-        FROM argument a
-        WHERE a.neutral_citation = %s;
-    """
-
-    try:
-        with conn.cursor() as cur:
-            cur.execute(query, (neutral_citation,))
-            results = cur.fetchall()
-
-            # Extract summaries from the results
-            summaries = [row[0] for row in results]
-            return summaries
-
-    except Exception as e:
-        print(f"Error fetching argument summary: {e}")
-        return []
-
