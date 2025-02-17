@@ -5,7 +5,7 @@ from parse_xml import get_all_metadata
 def combine_json(json_filenames: str) -> json:
     combined_data = []
     for filename in json_filenames:
-        with open(filename+'.json', 'r', encoding='utf-8') as file:
+        with open(filename, 'r', encoding='utf-8') as file:
             data = json.load(file)  
             combined_data.extend(data)  
     
@@ -40,7 +40,7 @@ def seed_db(combined_data: list[dict]) -> None:
     for case in combined_data:
         judgment_type = case['type_of_crime']
         judgment_date = case['judgment_date']
-        judge_name = case['judge'][0]['judge_name']
+        judge_name = case['judge']
         neutral_citation = case['neutral_citation']
         judgment_summary = case['description']
         court_name = case['court_name']
