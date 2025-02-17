@@ -58,11 +58,11 @@ def test_display_as_table():
 def test_display_judgment():
     with patch("streamlit.subheader") as mock_subheader, patch("streamlit.text") as mock_text, patch("streamlit.write") as mock_write:
         judgment_data = {"neutral_citation": "Case123",
-                         "argument_summary": "This is a summary", "judgement_date": "2025-01-01"}
+                         "judgment_summary": "This is a summary", "judgment_date": "2025-01-01"}
         data_source.display_judgment(judgment_data)
         mock_subheader.assert_called_once_with("Case123")
-        mock_text.assert_any_call("2025-01-01")
         mock_text.assert_any_call("This is a summary")
+        mock_text.assert_any_call("2025-01-01")
         mock_write.assert_not_called()
 
 
@@ -76,11 +76,11 @@ def test_display_judgment_no_data():
 def test_get_random_judgment_with_summary_and_date(mock_db_conn):
     mock_cursor = mock_db_conn.cursor.return_value.__enter__.return_value
     mock_cursor.fetchone.return_value = {"neutral_citation": "RandomCase",
-                                         "argument_summary": "Random summary", "judgement_date": "2025-02-01"}
+                                         "judgment_summary": "Random summary", "judgement_date": "2025-02-01"}
     result = data_source.get_random_judgment_with_summary_and_date(
         mock_db_conn)
     assert result["neutral_citation"] == "RandomCase"
-    assert result["argument_summary"] == "Random summary"
+    assert result["judgment_summary"] == "Random summary"
     assert result["judgement_date"] == "2025-02-01"
 
 
