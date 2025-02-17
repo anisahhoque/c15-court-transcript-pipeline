@@ -24,7 +24,6 @@ class Party(BaseModel):
 class CaseOutput(BaseModel):
     """All details to be extracted from the xmls"""
     type_of_crime: str
-    description: str
     judgment_description: str
     judge: str
     parties: list[Party]
@@ -95,7 +94,6 @@ if __name__=="__main__":
     The transcript: {case}
     Your response should be in a list of dictionaries containing the following keys:
     - type_of_crime: criminal or civil 
-    - description: a short summary of the case
     - judgment_description: a summary of the judgment
     - parties: A list of all parties involved in the case, with the following details for each party:
         - name: The name of the party.
