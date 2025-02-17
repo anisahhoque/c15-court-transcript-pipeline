@@ -34,5 +34,6 @@ def get_all_metadata(xml_filenames: str) -> list[dict]:
     return [get_metadata(filename) for filename in xml_filenames]
 
 if __name__=="__main__":
+    
     print(get_metadata('ukut_iac_2021_202.xml'))
     print(get_metadata('ewca-civ-2025-113.xml'))
