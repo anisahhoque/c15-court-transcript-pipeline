@@ -8,10 +8,6 @@ from pydantic import BaseModel
 
 load_dotenv()
 
-class Judge(BaseModel):
-    """Represents a judge involved in a legal case."""
-    judge_name: str
-
 class Legislation(BaseModel):
     """Represents legislations referenced in the judgment"""
     legislation_name: str
@@ -24,7 +20,6 @@ class Judgment(BaseModel):
 class Counsel(BaseModel):
     """Represents a counsel for a party"""
     counsel_name: str
-    counsel_title: str
     chamber_name: str
 
 class Party(BaseModel):
@@ -44,7 +39,7 @@ class CaseOutput(BaseModel):
     """All details to be extracted from the xmls"""
     type_of_crime: str
     description: str
-    judge: list[Judge]
+    judge: str
     parties: list[Party]
     arguments: list[Argument]
     ruling: str
@@ -72,7 +67,7 @@ def get_xml_data(filename: str) -> str:
     with open(filename, 'r', encoding='UTF-8') as file:
         return file.read
 
-def get_case_summary(model: str, client: OpenAI, prompt: str) -> list[dict]:
+def get_case_summary(model: str, client: OpenAI, prompt: str, filename: str) -> list[dict]:
     """Returns a list of dictionaries for each xml with the relevant data"""
     try:
         response = client.with_options(timeout=60.0).beta.chat.completions.parse(
@@ -88,7 +83,7 @@ def get_case_summary(model: str, client: OpenAI, prompt: str) -> list[dict]:
         response_choices = response.choices[0].message
         data = json.loads(response_choices.content).get("case_summary")
 
-        with open('gpt_response.json','w', encoding='utf-8') as file:
+        with open(filename.replace('.xml','.json'),'w', encoding='utf-8') as file:
             json.dump(data, file, indent=4)
 
         return data
@@ -104,7 +99,9 @@ if __name__=="__main__":
     file_names = ['ewhc_comm_2025_240.xml','ukut_iac_2021_202.xml',
                   'ewcop_t3_2025_6.xml', 'ewhc_kb_2025_287.xml',
                     'ewca-civ-2025-113.xml','ukpc_2025_7.xml']
-    case = get_xml_data(filename=file_names[0])
+    
+    filename = file_names[5]
+    case = get_xml_data(filename=filename)
     PROMPT = f"""
 
     You are a lawyer reading judgment transcripts.
@@ -133,4 +130,4 @@ if __name__=="__main__":
     This MUST be a json and only be a list of dictionaries
     """
 
-    get_case_summary(model=GPT_MODEL,client=api_client,prompt=PROMPT)
+    get_case_summary(model=GPT_MODEL,client=api_client,prompt=PROMPT, filename = filename)
