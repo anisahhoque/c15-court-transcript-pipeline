@@ -1,7 +1,7 @@
 \c judgments
 DROP TABLE IF EXISTS argument_legislation;
 DROP TABLE IF EXISTS legislation_section;
-DROP TABLE IF EXISTS judgement_reference;
+DROP TABLE IF EXISTS judgment_reference;
 DROP TABLE IF EXISTS argument;
 DROP TABLE IF EXISTS counsel_assignment;
 DROP TABLE IF EXISTS party;
@@ -24,12 +24,12 @@ CREATE TABLE legislation (
 
 CREATE TABLE judgment (
     neutral_citation VARCHAR(30) PRIMARY KEY,
-    court_id INT NOT NULL,
-    judgement_date DATE,
+    judgment_date DATE,
     judgment_summary TEXT NOT NULL,
     in_favour_of INT NOT NULL,
     judgment_type VARCHAR(20),
     court_name VARCHAR(100) NOT NULL,
+    judge_name VARCHAR(100) NOT NULL,
     CONSTRAINT fk_in_favour_of FOREIGN KEY (in_favour_of) REFERENCES role (role_id)
 );
 
@@ -39,12 +39,6 @@ CREATE TABLE counsel (
     chamber_name VARCHAR(30) NOT NULL
 );
 
-CREATE TABLE judge (
-    judge_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    judge_name VARCHAR(50) NOT NULL,
-    neutral_citation VARCHAR(30) NOT NULL,
-    CONSTRAINT fk_neutral_citation FOREIGN KEY (neutral_citation) REFERENCES judgment (neutral_citation)
-);
 
 CREATE TABLE party (
     party_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -72,8 +66,8 @@ CREATE TABLE argument (
     CONSTRAINT fk_role FOREIGN KEY (role_id) REFERENCES role (role_id)
 );
 
-CREATE TABLE judgement_reference (
-    judgement_reference_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+CREATE TABLE judgment_reference (
+    judgment_reference_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     argument_id INT NOT NULL,
     neutral_citation VARCHAR(30) NOT NULL,
     reference VARCHAR(50),

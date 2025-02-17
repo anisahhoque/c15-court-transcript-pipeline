@@ -8,14 +8,7 @@ from pydantic import BaseModel
 
 load_dotenv()
 
-class Legislation(BaseModel):
-    """Represents legislations referenced in the judgment"""
-    legislation_name: str
-    legislation_section: str
 
-class Judgment(BaseModel):
-    """Reference/unique id for a judgment"""
-    neutral_citation: str
 
 class Counsel(BaseModel):
     """Represents a counsel for a party"""
@@ -28,20 +21,12 @@ class Party(BaseModel):
     party_role: str
     counsels: list[Counsel]
 
-class Argument(BaseModel):
-    """Represents an argument made by a party role"""
-    summary: str
-    judgments_referenced: list[Judgment]
-    legislations_referenced: list[Legislation]
-    party_role: str
-
 class CaseOutput(BaseModel):
     """All details to be extracted from the xmls"""
     type_of_crime: str
     description: str
     judge: str
     parties: list[Party]
-    arguments: list[Argument]
     ruling: str
 
 class JudgmentOutput(BaseModel):
