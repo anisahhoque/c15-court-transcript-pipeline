@@ -75,3 +75,7 @@ CREATE TABLE counsel_assignment (
     CONSTRAINT fk_counsel FOREIGN KEY (counsel_id) REFERENCES counsel (counsel_id)
 );
 
+INSERT INTO judgment_type(judgment_type)
+VALUES ('Criminal'),
+       ('Civil');
+
