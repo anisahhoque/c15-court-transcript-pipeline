@@ -93,14 +93,15 @@ def seed_judgment_data(conn: connection, combined_data: list[dict],
     court_map = base_maps["court_map"]
     judgment_type_map = base_maps["judgment_type_map"]
 
-    judgment_table_data = []
-    party_table_data = []
-    counsel_table_data = []
-    counsel_assignment_table_data = []
+
     
     for case in combined_data:
    
-   
+        judgment_table_data = []
+        party_table_data = []
+        counsel_table_data = []
+        counsel_assignment_table_data = []
+        
         in_favour_of = case['ruling']
         judgment_type = case['type_of_crime'].lower()
         judgment_date = case['judgment_date']
@@ -123,26 +124,27 @@ def seed_judgment_data(conn: connection, combined_data: list[dict],
                                     court_map[court_name],
                                     judgment_date,
                                     judgment_summary,
-                                    in_favour_of,
+                                    role_map[in_favour_of.lower()],
                                     judgment_type_map[judgment_type],
                                     judge_name))
         
-        print(judgment_table_data)
+
     
         with conn.cursor() as cursor:
 
             judgment_table_insert_query = """insert into judgment
             values %s"""
             execute_values(cursor, judgment_table_insert_query,
-                           judgment_table_data[-1])
+                           judgment_table_data)
             conn.commit()
-            party_table_insert_query = """insert into party
+            party_table_insert_query = """insert into party (party_name, role_id, neutral_citation)
             values %s returning party_name, party_id"""
+            print(party_table_data)
             execute_values(cursor, party_table_insert_query,
                            party_table_data)
             conn.commit()
             party_map = {x["party_name"]: x["party_id"] for x in cursor.fetchall()}
-            counsel_table_insert_query = """insert into counsel
+            counsel_table_insert_query = """insert into counsel (counsel_name, chamber_id)
             values %s returning counsel_name, counsel_id"""
             execute_values(cursor, counsel_table_insert_query, counsel_table_data)
             conn.commit()
@@ -152,10 +154,10 @@ def seed_judgment_data(conn: connection, combined_data: list[dict],
             party_id = party_map[party['party_name']]
             for counsel in party['counsels']:
                 counsel_id = counsel_map[counsel['counsel_name']]
-                counsel_assignment_table_data.append(party_id, counsel_id)
+                counsel_assignment_table_data.append((party_id, counsel_id))
 
         with conn.cursor() as cursor:
-            counsel_assignment_insert_query = """insert into counsel_assignment
+            counsel_assignment_insert_query = """insert into counsel_assignment (party_id,counsel_id)
             values %s"""
             execute_values(cursor, counsel_assignment_insert_query,
                            counsel_assignment_table_data)
@@ -164,7 +166,7 @@ def seed_judgment_data(conn: connection, combined_data: list[dict],
 
 
 if __name__=="__main__":
-    conn = get_db_connection(dbname=ENV['DB_NAME'],user=ENV['USER'],password='',host=ENV['HOST'],port=ENV['PORT'])
+    conn = get_db_connection(dbname=ENV['DB_NAME'],user=ENV['DB_USERNAME'],password=ENV['DB_PASSWORD'],host=ENV['DB_HOST'],port=ENV['DB_PORT'])
     file_names = ['ewhc_comm_2025_240.xml','ukut_iac_2021_202.xml',
                   'ewcop_t3_2025_6.xml', 'ewhc_kb_2025_287.xml',
                     'ewca-civ-2025-113.xml','ukpc_2025_7.xml']
