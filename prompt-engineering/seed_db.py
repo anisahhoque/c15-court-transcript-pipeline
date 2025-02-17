@@ -13,8 +13,7 @@ def combine_json(json_filenames: str) -> json:
 
 def seed_db(combined_data: list[dict]) -> None:
 
-    df = pd.DataFrame(combined_data)
-    print(df.info())
+    
     for case in combined_data:
         judgment_date = case['judgment_date']
         judge_name = case['judge'][0]['judge_name']
@@ -37,6 +36,8 @@ def seed_db(combined_data: list[dict]) -> None:
                 legislation_name = legislation['legislation_name']
                 legislation_section = legislation['legislation_section']
             party_role = argument['party_role']
+
+
 if __name__=="__main__":
     file_names = ['ewhc_comm_2025_240.xml','ukut_iac_2021_202.xml',
                   'ewcop_t3_2025_6.xml', 'ewhc_kb_2025_287.xml',
