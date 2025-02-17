@@ -35,56 +35,45 @@ CREATE TABLE legislation (
     link TEXT
 );
 
-CREATE TABLE title (
-    title_id SMALLINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    title_name VARCHAR(30) NOT NULL
-);
-
 
 CREATE TABLE judgment (
     neutral_citation VARCHAR(30) PRIMARY KEY,
     court_id INT NOT NULL,
-    hearing_date DATE,
     judgement_date DATE,
-    CONSTRAINT fk_court FOREIGN KEY (court_id) REFERENCES court (court_id)
+    judgment_summary TEXT NOT NULL,
+    in_favour_of INT NOT NULL,
+    judgment_type VARCHAR(20),
+    CONSTRAINT fk_court FOREIGN KEY (court_id) REFERENCES court (court_id),
+    CONSTRAINT fk_in_favour_of FOREIGN KEY (in_favour_of) REFERENCES role (role_id)
 );
 
 CREATE TABLE counsel (
-    counsel_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    court_name VARCHAR(30) NOT NULL,
+    counsel_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    counsel_name VARCHAR(100) NOT NULL,
     chamber_id INT NOT NULL,
     CONSTRAINT fk_chamber FOREIGN KEY (chamber_id) REFERENCES chamber (chamber_id)
 );
 
-CREATE TABLE "case" (
-    case_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    case_number VARCHAR(20) NOT NULL,
-    neutral_citation VARCHAR(30) NOT NULL,
-    CONSTRAINT fk_neutral_citation FOREIGN KEY (neutral_citation) REFERENCES judgment (neutral_citation)
-);
-
 CREATE TABLE judge (
     judge_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    judge_name VARCHAR(20) NOT NULL,
-    title_id SMALLINT NOT NULL,
+    judge_name VARCHAR(50) NOT NULL,
     neutral_citation VARCHAR(30) NOT NULL,
-    CONSTRAINT fk_title FOREIGN KEY (title_id) REFERENCES title (title_id),
     CONSTRAINT fk_neutral_citation FOREIGN KEY (neutral_citation) REFERENCES judgment (neutral_citation)
 );
 
 CREATE TABLE party (
-    party_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    party_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     party_name VARCHAR(30) NOT NULL,
-    case_id INT NOT NULL,
     role_id INT NOT NULL,
-    CONSTRAINT fk_case FOREIGN KEY (case_id) REFERENCES "case" (case_id),
+    neutral_citation VARCHAR(30) NOT NULL,
+    CONSTRAINT neutral_citation FOREIGN KEY (neutral_citation) REFERENCES judgment(neutral_citation),
     CONSTRAINT fk_role FOREIGN KEY (role_id) REFERENCES role (role_id)
 );
 
 CREATE TABLE counsel_assignment (
-    counsel_assignment_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    party_id BIGINT NOT NULL,
-    counsel_id BIGINT NOT NULL,
+    counsel_assignment_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    party_id INT NOT NULL,
+    counsel_id INT NOT NULL,
     CONSTRAINT fk_party FOREIGN KEY (party_id) REFERENCES party (party_id),
     CONSTRAINT fk_counsel FOREIGN KEY (counsel_id) REFERENCES counsel (counsel_id)
 );
@@ -94,23 +83,20 @@ CREATE TABLE argument (
     neutral_citation VARCHAR(30) NOT NULL,
     role_id SMALLINT NOT NULL,
     summary TEXT NOT NULL,
-    counsel_id INT,
     CONSTRAINT fk_neutral_citation FOREIGN KEY (neutral_citation) REFERENCES judgment(neutral_citation),
-    CONSTRAINT fk_counsel FOREIGN KEY (counsel_id) REFERENCES counsel (counsel_id),
     CONSTRAINT fk_role FOREIGN KEY (role_id) REFERENCES role (role_id)
 );
 
 CREATE TABLE judgement_reference (
-    judgement_reference_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    judgement_reference_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     argument_id INT NOT NULL,
     neutral_citation VARCHAR(30) NOT NULL,
     reference VARCHAR(50),
-    CONSTRAINT fk_argument FOREIGN KEY (argument_id) REFERENCES argument (argument_id),
-    CONSTRAINT fk_neutral_citation FOREIGN KEY (neutral_citation) REFERENCES judgment (neutral_citation)
+    CONSTRAINT fk_argument FOREIGN KEY (argument_id) REFERENCES argument(argument_id)
 );
 
 CREATE TABLE legislation_section (
-    legislation_section_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    legislation_section_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     section VARCHAR(10),
     legislation_id INT NOT NULL,
     CONSTRAINT fk_legislation FOREIGN KEY (legislation_id) REFERENCES legislation (legislation_id)
