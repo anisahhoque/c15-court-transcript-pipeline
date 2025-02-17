@@ -6,7 +6,6 @@ from dotenv import load_dotenv
 import psycopg2
 from psycopg2.extensions import connection
 from psycopg2.extras import RealDictCursor, execute_values
-import pandas as pd
 from parse_xml import get_all_metadata
 
 load_dotenv()
@@ -20,7 +19,7 @@ def get_db_connection(dbname: str, user: str, password: str, host: str, port: st
             cursor_factory=RealDictCursor)
         return conn
     except psycopg2.DatabaseError as e:
-        raise psycopg2.DatabaseError(f"Error connecting to database.") from e
+        raise psycopg2.DatabaseError("Error connecting to database.") from e
 
 
 def combine_json(json_filenames: str) -> json:
@@ -28,44 +27,46 @@ def combine_json(json_filenames: str) -> json:
     combined_data = []
     for filename in json_filenames:
         with open(filename, 'r', encoding='utf-8') as file:
-            data = json.load(file)  
-            combined_data.extend(data)  
-    
+            data = json.load(file)
+            combined_data.extend(data)
     return combined_data
 
 
 def seed_db_base_tables(combined_data: list[dict], conn: connection) -> dict[dict]:
     """Seeds all the base tables, returning """
     cursor = conn.cursor()
-    roles = set([
-        party['party_role'].lower()
-        for case in combined_data  
-        for party in case['parties']  
-    ])
-    print(roles)
+    roles = {party['party_role'].lower()
+            for case in combined_data
+            for party in case['parties']}
+
     roles = [(role,) for role in roles]
     role_insert_query = """insert into role (role_name) values %s returning role_id, role_name"""
     execute_values(cursor, role_insert_query, roles)
     role_mapping = {x["role_name"]: x["role_id"] for x in cursor.fetchall()}
 
 
-    courts = set([
-        (case['court_name'])
-        for case in combined_data
-    ])
+    courts = {(case['court_name'])
+                for case in combined_data
+                }
     courts = [(court,) for court in courts]
-    court_insert_query = """insert into court (court_name) values %s returning court_id, court_name"""
+    court_insert_query = """insert into court
+                            (court_name) 
+                            values %s 
+                            returning court_id, court_name"""
     execute_values(cursor, court_insert_query, courts)
     court_mapping = {x["court_name"]: x["court_id"] for x in cursor.fetchall()}
 
-    chambers = set([
+    chambers = {
         (counsel['chamber_name'])
         for case in combined_data
         for party in case['parties']
         for counsel in party['counsels']
-    ])
+    }
     chambers = [(chamber,) for chamber in chambers]
-    chambers_insert_query = """insert into chamber (chamber_name) values %s returning chamber_id, chamber_name"""
+    chambers_insert_query = """insert into chamber
+                                (chamber_name) 
+                                values %s 
+                                returning chamber_id, chamber_name"""
     execute_values(cursor, chambers_insert_query, chambers)
     chamber_mapping = {x["chamber_name"]: x["chamber_id"] for x in cursor.fetchall()}
 
@@ -94,14 +95,14 @@ def seed_judgment_data(conn: connection, combined_data: list[dict],
     judgment_type_map = base_maps["judgment_type_map"]
 
 
-    
+
     for case in combined_data:
-   
+
         judgment_table_data = []
         party_table_data = []
         counsel_table_data = []
         counsel_assignment_table_data = []
-        
+
         in_favour_of = case['ruling']
         judgment_type = case['type_of_crime'].lower()
         judgment_date = case['judgment_date']
@@ -127,9 +128,9 @@ def seed_judgment_data(conn: connection, combined_data: list[dict],
                                     role_map[in_favour_of.lower()],
                                     judgment_type_map[judgment_type],
                                     judge_name))
-        
 
-    
+
+
         with conn.cursor() as cursor:
 
             judgment_table_insert_query = """insert into judgment
@@ -157,8 +158,9 @@ def seed_judgment_data(conn: connection, combined_data: list[dict],
                 counsel_assignment_table_data.append((party_id, counsel_id))
 
         with conn.cursor() as cursor:
-            counsel_assignment_insert_query = """insert into counsel_assignment (party_id,counsel_id)
-            values %s"""
+            counsel_assignment_insert_query = """insert into counsel_assignment
+                                                (party_id,counsel_id)
+                                                values %s"""
             execute_values(cursor, counsel_assignment_insert_query,
                            counsel_assignment_table_data)
             conn.commit()
@@ -166,21 +168,23 @@ def seed_judgment_data(conn: connection, combined_data: list[dict],
 
 
 if __name__=="__main__":
-    conn = get_db_connection(dbname=ENV['DB_NAME'],user=ENV['DB_USERNAME'],password=ENV['DB_PASSWORD'],host=ENV['DB_HOST'],port=ENV['DB_PORT'])
+    conn = get_db_connection(dbname=ENV['DB_NAME'],user=ENV['DB_USERNAME'],
+                             password=ENV['DB_PASSWORD'],host=ENV['DB_HOST'],
+                             port=ENV['DB_PORT'])
     file_names = ['ewhc_comm_2025_240.xml','ukut_iac_2021_202.xml',
                   'ewcop_t3_2025_6.xml', 'ewhc_kb_2025_287.xml',
                     'ewca-civ-2025-113.xml','ukpc_2025_7.xml']
-    
+
     manual_json = get_all_metadata(file_names)
     gpt_json = combine_json([file.replace('.xml','.json')for file in file_names])
 
     combined_json = []
-    
+
 
     for manual_item, gpt_item in zip(manual_json, gpt_json):
         combined_item = {**manual_item, **gpt_item}
         combined_json.append(combined_item)
-    
+
     mappings = seed_db_base_tables(combined_json,conn)
     seed_judgment_data(conn,combined_json,mappings )
 
