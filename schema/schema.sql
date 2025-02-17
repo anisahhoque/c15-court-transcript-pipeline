@@ -2,6 +2,7 @@
 DROP TABLE IF EXISTS counsel_assignment;
 DROP TABLE IF EXISTS party;
 DROP TABLE IF EXISTS counsel;
+DROP TABLE IF EXISTS chamber;
 DROP TABLE IF EXISTS judgment;
 DROP TABLE IF EXISTS court;
 DROP TABLE IF EXISTS judgment_type;
@@ -20,6 +21,10 @@ CREATE TABLE court (
     court_name VARCHAR(100) NOT NULL
 );
 
+create TABLE chamber (
+    chamber_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    chamber_name VARCHAR(100) NOT NULL
+);
 
 CREATE TABLE judgment_type (
     judgment_type_id SMALLINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
