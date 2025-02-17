@@ -25,6 +25,7 @@ class CaseOutput(BaseModel):
     """All details to be extracted from the xmls"""
     type_of_crime: str
     description: str
+    judgment_description: str
     judge: str
     parties: list[Party]
     ruling: str
@@ -94,7 +95,8 @@ if __name__=="__main__":
     The transcript: {case}
     Your response should be in a list of dictionaries containing the following keys:
     - type_of_crime: criminal or civil 
-    - description: a short neutral summary of the judgment
+    - description: a short summary of the case
+    - judgment_description: a summary of the judgment
     - parties: A list of all parties involved in the case, with the following details for each party:
         - name: The name of the party.
         - role: The role of the party.
@@ -102,12 +104,6 @@ if __name__=="__main__":
             - name: The name of the counsel (e.g., "William Bennett KC").
             - title: The title of the counsel (e.g., "KC", "QC", or none).
             - chamber: The name of the counsel's chambers (e.g., "Brett Wilson LLP").
-    - arguments: a list of multiple distinct arguments as you can find made throughout the judgment that are made by the roles of which parties that you have found. Each argument contains:
-                - A brief summary of the argument presented
-                - A list of judgments that are mentioned in that specific argument. Use only their neutral citation number e.g., [2025] EWHC 287 (KB).
-                - a list of legislations that are mentioned in that specific argument
-                - legislations have a legislation name and section for example Data Protection Act 2018 Section 17
-                - can you assign the role
     - judge: The fullname of the judge including the title e.g Mr Justice Smith
     - ruling: the party role in which the judgment is in favour of
 
