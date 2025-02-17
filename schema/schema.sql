@@ -6,7 +6,9 @@ DROP TABLE IF EXISTS chamber;
 DROP TABLE IF EXISTS judgment;
 DROP TABLE IF EXISTS court;
 DROP TABLE IF EXISTS judgment_type;
+DROP TABLE IF EXISTS chamber;
 DROP TABLE IF EXISTS role;
+
 
 CREATE TABLE role (
     role_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -29,11 +31,16 @@ CREATE TABLE judgment_type (
     judgment_type VARCHAR(30)
 );
 
+CREATE TABLE chamber (
+    chamber_id SMALLINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    chamber_name VARCHAR(50) NOT NULL
+);
+
 CREATE TABLE counsel (
     counsel_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     counsel_name VARCHAR(100) NOT NULL,
-    chamber_id INT,
-    CONSTRAINT chamber_id FOREIGN KEY (chamber_id) REFERENCES chamber (chamber_id)
+    chamber_id SMALLINT,
+    CONSTRAINT fk_chamber FOREIGN KEY (chamber_id) REFERENCES chamber (chamber_id)
 );
 
 CREATE TABLE judgment (

@@ -185,3 +185,4 @@ prompt-engineering/*.json
 seed.sql
 test.sh
 db_connection.sh
+*.sh
