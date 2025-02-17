@@ -13,9 +13,12 @@ provider "aws" {
   secret_key = var.secret_key
 }
 
-resource "aws_vpc" "judgement_project" {}
+data "aws_caller_identity" "current" {}
 
-resource "aws_s3_bucket" "judgement_xml" {
-  bucket = "judgement_xml"
-  force_destroy = true
+locals {
+  account_id = data.aws_caller_identity.current.account_id
+}
+
+resource "aws_ecs_cluster" "main" {
+  name = "judgment-reader"
 }

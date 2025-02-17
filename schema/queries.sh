@@ -1,0 +1,1 @@
+psql -h localhost -U bill_veliz -d judgments -f queries.sql
