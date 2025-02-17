@@ -34,14 +34,15 @@ def combine_json(json_filenames: str) -> json:
     return combined_data
 
 
-def seed_db_base_tables(combined_data: list[dict], conn: connection) -> dict:
-    """Seeds all the base tables"""
+def seed_db_base_tables(combined_data: list[dict], conn: connection) -> dict[dict]:
+    """Seeds all the base tables, returning """
     cursor = conn.cursor()
     roles = set([
         party['party_role'].lower()
         for case in combined_data  
         for party in case['parties']  
     ])
+    print(roles)
     roles = [(role,) for role in roles]
     role_insert_query = """insert into role (role_name) values %s returning role_id, role_name"""
     execute_values(cursor, role_insert_query, roles)
@@ -86,25 +87,6 @@ def seed_judgment_data(conn: connection, combined_data: list[dict],
     """Seeds judgment data into database.
     Returns None."""
 
-    counsels = set([
-        counsel['counsel_name']
-        for case in combined_data
-        for party in case['parties']
-        for counsel in party['counsels']
-    ])
-    counsels = [(counsel,) for counsel in counsels]
-    counsels_insert_query = """insert into counsel (counsel_name) values %s returning counsel_id, counsel_name"""
-    execute_values(cursor, counsels_insert_query, counsels)
-    counsel_mapping = {x["counsel_name"]: x["counsel_id"] for x in cursor.fetchall()}
-
-    insert_judgment_query = """insert into judgment 
-                                (neutral_citation,court_id,judgment_date,judgment_summary, in_favour_of,judgment_type_id,judge_name)
-                                values (%s,%s,%s,%s,%s,%s,%s)"""
-    insert_party_query = """insert into party 
-                                (party_name, role_id, neutral_citation)
-                                values (%s,%s,%s)
-                                returning party_id, party_name"""
-
 
     role_map = base_maps["role_map"]
     chamber_map = base_maps["chamber_map"]
@@ -128,16 +110,15 @@ def seed_judgment_data(conn: connection, combined_data: list[dict],
         court_name = case['court_name']
         for party in case['parties']:
             party_name = party['party_name']
-            party_role = party['party_role']
+            party_role = party['party_role'].lower()
             party_table_data.append((party_name,
                                      role_map[party_role],
                                      neutral_citation))
             for counsel in party['counsels']:
-                chamber_id = chamber_map['chamber_name']
+                chamber_id = chamber_map[counsel['chamber_name']]
                 counsel_name = counsel['counsel_name']
-                counsel_table_data.append(counsel_name, chamber_id)
+                counsel_table_data.append((counsel_name, chamber_id))
 
-        
         judgment_table_data.append((neutral_citation,
                                     court_map[court_name],
                                     judgment_date,
@@ -146,11 +127,14 @@ def seed_judgment_data(conn: connection, combined_data: list[dict],
                                     judgment_type_map[judgment_type],
                                     judge_name))
         
+        print(judgment_table_data)
+    
         with conn.cursor() as cursor:
+
             judgment_table_insert_query = """insert into judgment
             values %s"""
             execute_values(cursor, judgment_table_insert_query,
-                           judgment_table_data)
+                           judgment_table_data[-1])
             conn.commit()
             party_table_insert_query = """insert into party
             values %s returning party_name, party_id"""
@@ -195,5 +179,7 @@ if __name__=="__main__":
         combined_item = {**manual_item, **gpt_item}
         combined_json.append(combined_item)
     
-    print(seed_db_base_tables(combined_json,conn))
+    mappings = seed_db_base_tables(combined_json,conn)
+    seed_judgment_data(conn,combined_json,mappings )
+
     conn.close()

@@ -109,4 +109,4 @@ if __name__=="__main__":
     This MUST be a json and only be a list of dictionaries
     """
 
-    get_case_summary(model=GPT_MODEL,client=api_client,prompt=PROMPT, filename = filename)
+    get_case_summary(model=GPT_MODEL,client=api_client,prompt=PROMPT,filename=filename)
