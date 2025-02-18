@@ -10,7 +10,5 @@ def main():
     conn = get_db_connection()
     display_judgment_search(conn)
 
-
-
 if __name__ == "__main__":
     main()
