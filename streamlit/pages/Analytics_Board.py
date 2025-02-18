@@ -1,18 +1,19 @@
-import streamlit as st
-from dotenv import load_dotenv
-from data_source import get_db_connection
-from dashboard_functions import cases_by_court, cases_by_judgment_type
+"""This script displays the page for the Analytics Board page on streamlit."""
 
-from components import dashboard_title
+# pylint: disable=invalid-name
+from dotenv import load_dotenv
+from data_source import get_db_connection  # pylint: disable=import-error
+from dashboard_functions import cases_by_court, cases_by_judgment_type  # pylint: disable=import-error
+
+from components import dashboard_title  # pylint: disable=import-error
 
 def main():
+    """Main function to run the analytics page."""
     load_dotenv()
     conn = get_db_connection()
     dashboard_title()
     cases_by_court(conn)
     cases_by_judgment_type(conn)
-    
-
 
 if __name__ == "__main__":
     main()

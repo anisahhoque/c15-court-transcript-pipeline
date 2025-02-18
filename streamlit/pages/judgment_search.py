@@ -1,11 +1,14 @@
-import streamlit as st
+"""This script displays the judgments page."""
 
-from components import dashboard_title
-from data_source import fetch_judgments, get_db_connection, display_judgment_search
+# pylint: disable=invalid-name
+
+from components import dashboard_title  # pylint: disable=import-error
+from data_source import get_db_connection, display_judgment_search  # pylint: disable=import-error
 
 
 
 def main():
+    """This function runs the main block of the webpage."""
     dashboard_title()
     conn = get_db_connection()
     display_judgment_search(conn)
