@@ -1,11 +1,15 @@
-# dashboard_components.py
-import altair as alt
-import streamlit as st
+"""This script has the supportive functions for the analytics board."""
 import pandas as pd
+import altair as alt
+from psycopg2 import connect as connection
+import streamlit as st
 
-
-def cases_by_court(conn):
-    query = "SELECT court_name, COUNT(*) AS case_count FROM judgment JOIN court ON judgment.court_id = court.court_id GROUP BY court_name"
+def cases_by_court(conn:connection) -> None:
+    """Returns cases by court chart diagram."""
+    query = """SELECT court_name, COUNT(*) AS case_count
+    FROM judgment
+    JOIN court ON judgment.court_id = court.court_id
+    GROUP BY court_name"""
 
     # Execute query using connection
     with conn.cursor() as cursor:
@@ -27,8 +31,13 @@ def cases_by_court(conn):
     st.altair_chart(chart_court_cases, use_container_width=True)
 
 
-def cases_by_judgment_type(conn):
-    query = "SELECT judgment_type, COUNT(*) AS case_count FROM judgment JOIN judgment_type ON judgment.judgment_type_id = judgment_type.judgment_type_id GROUP BY judgment_type"
+def cases_by_judgment_type(conn:connection) -> None:
+    """Displays cases by judgment type in a pie chart on streamlit."""
+    query = """SELECT judgment_type, COUNT(*) AS case_count
+    FROM judgment
+    JOIN judgment_type
+    ON judgment.judgment_type_id = judgment_type.judgment_type_id
+    GROUP BY judgment_type"""
 
     # Execute query using connection
     with conn.cursor() as cursor:
