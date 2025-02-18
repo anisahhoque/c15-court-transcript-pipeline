@@ -178,8 +178,8 @@ cython_debug/
 # sensitive terraform files
 **/*terraform**
 
-# judgements
-judgements
+# judgments
+judgments
 
 prompt-engineering/*.json
 seed.sql

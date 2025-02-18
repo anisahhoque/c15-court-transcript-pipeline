@@ -11,7 +11,7 @@ DROP TABLE IF EXISTS role;
 
 CREATE TABLE role (
     role_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    role_name VARCHAR(10) NOT NULL
+    role_name VARCHAR(100) NOT NULL
 );
 
 
@@ -27,7 +27,7 @@ create TABLE chamber (
 
 CREATE TABLE judgment_type (
     judgment_type_id SMALLINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    judgment_type VARCHAR(30)
+    judgment_type VARCHAR(100)
 );
 
 CREATE TABLE counsel (
@@ -54,7 +54,7 @@ CREATE TABLE judgment (
 
 CREATE TABLE party (
     party_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    party_name VARCHAR(30) NOT NULL,
+    party_name VARCHAR(100) NOT NULL,
     role_id INT NOT NULL,
     neutral_citation VARCHAR(30) NOT NULL,
     CONSTRAINT neutral_citation FOREIGN KEY (neutral_citation) REFERENCES judgment(neutral_citation),
@@ -70,6 +70,6 @@ CREATE TABLE counsel_assignment (
 );
 
 INSERT INTO judgment_type(judgment_type)
-VALUES ('Criminal'),
-       ('Civil');
+VALUES ('criminal'),
+       ('civil');
 
