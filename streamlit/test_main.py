@@ -1,21 +1,21 @@
 import pytest
 from unittest.mock import patch, MagicMock
 import streamlit as st
-from main import main
+from Home import main
 
 @pytest.fixture
 def mock_dependencies(mocker):
     """Fixture to mock all dependencies."""
     return {
-        "mock_load_dotenv": mocker.patch("main.load_dotenv"),
-        "mock_dashboard_title": mocker.patch("main.dashboard_title"),
-        "mock_homepage_text": mocker.patch("main.homepage_text"),
-        "mock_get_db_connection": mocker.patch("main.get_db_connection"),
-        "mock_get_most_recent_judgments": mocker.patch("main.get_most_recent_judgments"),
-        "mock_display_as_table": mocker.patch("main.display_as_table"),
-        "mock_get_most_recent_judgment": mocker.patch("main.get_most_recent_judgment"),
-        "mock_display_judgment": mocker.patch("main.display_judgment"),
-        "mock_get_random_judgment": mocker.patch("main.get_random_judgment_with_summary_and_date"),
+        "mock_load_dotenv": mocker.patch("Home.load_dotenv"),
+        "mock_dashboard_title": mocker.patch("Home.dashboard_title"),
+        "mock_homepage_text": mocker.patch("Home.homepage_text"),
+        "mock_get_db_connection": mocker.patch("Home.get_db_connection"),
+        "mock_get_most_recent_judgments": mocker.patch("Home.get_most_recent_judgments"),
+        "mock_display_as_table": mocker.patch("Home.display_as_table"),
+        "mock_get_most_recent_judgment": mocker.patch("Home.get_most_recent_judgment"),
+        "mock_display_judgment": mocker.patch("Home.display_judgment"),
+        "mock_get_random_judgment": mocker.patch("Home.get_random_judgment_with_summary_and_date"),
         "mock_st_columns": mocker.patch("streamlit.columns", return_value=(MagicMock(), MagicMock())),
         "mock_st_subheader": mocker.patch("streamlit.subheader"),
     }

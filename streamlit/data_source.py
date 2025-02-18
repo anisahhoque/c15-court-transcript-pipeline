@@ -311,3 +311,6 @@ def fetch_parties_involved(_conn: connection, neutral_citation: str) -> dict:
         print(f"Error fetching parties involved: {e}")
 
     return parties_involved
+
+
+
