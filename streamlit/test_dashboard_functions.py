@@ -53,8 +53,10 @@ def test_cases_by_court(mock_conn, mock_streamlit):
 
     # Verify SQL execution
     cursor.execute.assert_called_once_with(
-        "SELECT court_name, COUNT(*) AS case_count FROM judgment "
-        "JOIN court ON judgment.court_id = court.court_id GROUP BY court_name"
+        """SELECT court_name, COUNT(*) AS case_count
+    FROM judgment
+    JOIN court ON judgment.court_id = court.court_id
+    GROUP BY court_name"""
     )
 
     # Verify DataFrame creation
@@ -100,8 +102,11 @@ def test_cases_by_judgment_type(mock_conn, mock_streamlit):
 
     # Verify SQL execution
     cursor.execute.assert_called_once_with(
-        "SELECT judgment_type, COUNT(*) AS case_count FROM judgment "
-        "JOIN judgment_type ON judgment.judgment_type_id = judgment_type.judgment_type_id GROUP BY judgment_type"
+        """SELECT judgment_type, COUNT(*) AS case_count
+    FROM judgment
+    JOIN judgment_type
+    ON judgment.judgment_type_id = judgment_type.judgment_type_id
+    GROUP BY judgment_type"""
     )
 
     # Verify DataFrame creation
