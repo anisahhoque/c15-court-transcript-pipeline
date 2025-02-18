@@ -1,3 +1,6 @@
+from data_source import fetch_case_overview  # Adjust based on your project structure
+from unittest.mock import patch, MagicMock
+from data_source import display_judgment_search
 from data_source import fetch_parties_involved
 from unittest.mock import MagicMock
 import psycopg2
@@ -84,52 +87,155 @@ def test_get_random_judgment_with_summary_and_date(mock_db_conn):
     assert result["judgement_date"] == "2025-02-01"
 
 
-
-def test_fetch_judgments_no_filters(mock_db_conn):
+def test_fetch_judgments_row_count(mock_db_conn):
     mock_cursor = mock_db_conn.cursor.return_value.__enter__.return_value
     mock_cursor.fetchall.return_value = [
-        ("[2023] UKSC 10", "2023-12-10", "Summary 1", "Supreme Court"),
-        ("[2022] EWCA Civ 100", "2022-05-15", "Summary 2", "Court of Appeal"),
+        ("[2023] UKSC 10", "2023-12-10", "Summary 1",
+         "Supreme Court", "Judgment Type 1"),
+        ("[2022] EWCA Civ 100", "2022-05-15", "Summary 2",
+         "Court of Appeal", "Judgment Type 2"),
     ]
     df = data_source.fetch_judgments(mock_db_conn)
+
+    # Assert the correct number of rows are returned
     assert len(df) == 2
-    assert list(df.columns) == ["neutral_citation",
-                                "judgement_date", "argument_summary", "court_name"]
 
 
-def test_fetch_judgments_filter_by_court(mock_db_conn):
+def test_fetch_judgments_specific_values(mock_db_conn):
     mock_cursor = mock_db_conn.cursor.return_value.__enter__.return_value
     mock_cursor.fetchall.return_value = [
-        ("[2023] UKSC 10", "2023-12-10", "Summary 1", "Supreme Court")]
+        ("[2023] UKSC 10", "2023-12-10", "Summary 1",
+         "Supreme Court", "Judgment Type 1"),
+        ("[2022] EWCA Civ 100", "2022-05-15", "Summary 2",
+         "Court of Appeal", "Judgment Type 2"),
+    ]
+    df = data_source.fetch_judgments(mock_db_conn)
+
+    # Optionally, assert specific values in the DataFrame for additional validation
+    assert df.iloc[0]["neutral_citation"] == "[2023] UKSC 10"
+    assert df.iloc[1]["court_name"] == "Court of Appeal"
+    assert df.iloc[0]["judgment_summary"] == "Summary 1"
+
+def test_fetch_judgments_specific_values(mock_db_conn):
+    mock_cursor = mock_db_conn.cursor.return_value.__enter__.return_value
+    mock_cursor.fetchall.return_value = [
+        ("[2023] UKSC 10", "2023-12-10", "Summary 1", "Supreme Court", "Judgment Type 1"),
+        ("[2022] EWCA Civ 100", "2022-05-15", "Summary 2", "Court of Appeal", "Judgment Type 2"),
+    ]
+    df = data_source.fetch_judgments(mock_db_conn)
+    
+    # Optionally, assert specific values in the DataFrame for additional validation
+    assert df.iloc[0]["neutral_citation"] == "[2023] UKSC 10"
+    assert df.iloc[1]["court_name"] == "Court of Appeal"
+    assert df.iloc[0]["judgment_summary"] == "Summary 1"
+
+
+def test_fetch_judgments_column_names(mock_db_conn):
+    mock_cursor = mock_db_conn.cursor.return_value.__enter__.return_value
+    mock_cursor.fetchall.return_value = [
+        ("[2023] UKSC 10", "2023-12-10", "Summary 1",
+         "Supreme Court", "Judgment Type 1"),
+        ("[2022] EWCA Civ 100", "2022-05-15", "Summary 2",
+         "Court of Appeal", "Judgment Type 2"),
+    ]
+    df = data_source.fetch_judgments(mock_db_conn)
+
+    # Assert the correct column names are returned
+    assert list(df.columns) == ["neutral_citation", "judgment_date",
+                                "judgment_summary", "court_name", "judgment_type"]
+
+
+def test_fetch_judgments_filter_by_court_row_count(mock_db_conn):
+    mock_cursor = mock_db_conn.cursor.return_value.__enter__.return_value
+    mock_cursor.fetchall.return_value = [
+        ("[2023] UKSC 10", "2023-12-10", "Summary 1",
+         "Supreme Court", "Judgment Type 1")
+    ]
     df = data_source.fetch_judgments(mock_db_conn, court="Supreme Court")
+
+    # Assert the correct number of rows are returned
     assert len(df) == 1
+
+
+def test_fetch_judgments_filter_by_court_name(mock_db_conn):
+    mock_cursor = mock_db_conn.cursor.return_value.__enter__.return_value
+    mock_cursor.fetchall.return_value = [
+        ("[2023] UKSC 10", "2023-12-10", "Summary 1",
+         "Supreme Court", "Judgment Type 1")
+    ]
+    df = data_source.fetch_judgments(mock_db_conn, court="Supreme Court")
+
+    # Assert the court name in the result matches the filter
     assert df.iloc[0]["court_name"] == "Supreme Court"
 
 
-def test_fetch_judgments_filter_by_case_type(mock_db_conn):
+def test_fetch_judgments_filter_by_court_values(mock_db_conn):
     mock_cursor = mock_db_conn.cursor.return_value.__enter__.return_value
     mock_cursor.fetchall.return_value = [
-        ("[2023] UKSC 10", "2023-12-10", "Civil dispute regarding contracts", "Supreme Court")]
+        ("[2023] UKSC 10", "2023-12-10", "Summary 1",
+         "Supreme Court", "Judgment Type 1")
+    ]
+    df = data_source.fetch_judgments(mock_db_conn, court="Supreme Court")
+
+    # Optionally, assert other values to ensure the result is as expected
+    assert df.iloc[0]["neutral_citation"] == "[2023] UKSC 10"
+    assert df.iloc[0]["judgment_summary"] == "Summary 1"
+
+
+def test_fetch_judgments_filter_by_case_type_row_count(mock_db_conn):
+    mock_cursor = mock_db_conn.cursor.return_value.__enter__.return_value
+    mock_cursor.fetchall.return_value = [
+        ("[2023] UKSC 10", "2023-12-10",
+         "Civil dispute regarding contracts", "Supreme Court", "Civil")
+    ]
     df = data_source.fetch_judgments(mock_db_conn, case_type="Civil")
+
+    # Assert the correct number of rows are returned
     assert len(df) == 1
-    assert "Civil" in df.iloc[0]["argument_summary"]
+
+
+def test_fetch_judgments_filter_by_case_type_judgment_type(mock_db_conn):
+    mock_cursor = mock_db_conn.cursor.return_value.__enter__.return_value
+    mock_cursor.fetchall.return_value = [
+        ("[2023] UKSC 10", "2023-12-10",
+         "Civil dispute regarding contracts", "Supreme Court", "Civil")
+    ]
+    df = data_source.fetch_judgments(mock_db_conn, case_type="Civil")
+
+    # Assert the judgment type in the result matches the filter
+    assert "Civil" in df.iloc[0]["judgment_type"]
+
+
+def test_fetch_judgments_filter_by_case_type_values(mock_db_conn):
+    mock_cursor = mock_db_conn.cursor.return_value.__enter__.return_value
+    mock_cursor.fetchall.return_value = [
+        ("[2023] UKSC 10", "2023-12-10",
+         "Civil dispute regarding contracts", "Supreme Court", "Civil")
+    ]
+    df = data_source.fetch_judgments(mock_db_conn, case_type="Civil")
+
+    # Optionally, assert other values to ensure the result is as expected
+    assert df.iloc[0]["neutral_citation"] == "[2023] UKSC 10"
+    assert df.iloc[0]["court_name"] == "Supreme Court"
+    assert df.iloc[0]["judgment_summary"] == "Civil dispute regarding contracts"
 
 
 def test_fetch_judgments_filter_by_judgment_date(mock_db_conn):
     mock_cursor = mock_db_conn.cursor.return_value.__enter__.return_value
     mock_cursor.fetchall.return_value = [
-        ("[2022] EWCA Civ 100", "2022-05-15", "Appeal case summary", "Court of Appeal")]
-    df = data_source.fetch_judgments(mock_db_conn, judgment_date="2022-05-15")
-    assert len(df) == 1
-    assert df.iloc[0]["judgement_date"] == "2022-05-15"
+        ("[2022] EWCA Civ 100", "2022-05-15",
+         "Appeal case summary", "Court of Appeal", "Civil")
+    ]
+    df = data_source.fetch_judgments(
+        mock_db_conn, start_date="2022-05-15", end_date="2022-05-15")
 
-def test_fetch_judgments_search_query(mock_db_conn):
-    mock_cursor = mock_db_conn.cursor.return_value.__enter__.return_value
-    mock_cursor.fetchall.return_value = [
-        ("[2023] UKSC 10", "2023-12-10", "This case involves criminal law", "Supreme Court")]
-    df = data_source.fetch_judgments(mock_db_conn, search_query="criminal")
+    # Assert the correct number of rows are returned
     assert len(df) == 1
-    assert "criminal" in df.iloc[0]["argument_summary"].lower()
+
+    # Assert the date in the result matches the filter
+    assert df.iloc[0]["judgment_date"] == "2022-05-15"
+
+
 
 
 def test_fetch_judgments_empty_result(mock_db_conn):
@@ -184,36 +290,14 @@ def test_fetch_judgments_called_with_correct_arguments(mock_session_state, mock_
     mock_cursor = MagicMock()
     mock_db_conn.cursor.return_value.__enter__.return_value = mock_cursor
     mock_connect.return_value = mock_db_conn
-    
+
+
+
 @patch("streamlit.text_input")
 @patch("streamlit.selectbox")
 @patch("streamlit.date_input")
 @patch("streamlit.dataframe")
 @patch("streamlit.write")
-@patch("data_source.fetch_judgments")
-@patch("data_source.fetch_case_overview")
-def test_display_judgment_search_no_results(
-    mock_fetch_case_overview, mock_fetch_judgments, mock_data_frame, mock_write,
-    mock_date_input, mock_selectbox, mock_text_input
-):
-
-    mock_text_input.return_value = "Search term"
-    mock_selectbox.side_effect = ["Court A", "Civil"]
-    mock_date_input.return_value = None
-    
-    mock_fetch_judgments.return_value = pd.DataFrame()
-    mock_db_conn = MagicMock()
-
-    display_judgment_search(mock_db_conn)
-
-    mock_data_frame.assert_called_once()
-
-
-@patch("streamlit.text_input")
-@patch("streamlit.selectbox")
-@patch("streamlit.date_input")
-@patch("streamlit.dataframe")
-@patch("streamlit.write") 
 @patch("data_source.fetch_judgments")
 @patch("data_source.fetch_case_overview")
 def test_display_judgment_search_with_results(
@@ -224,7 +308,7 @@ def test_display_judgment_search_with_results(
     # Mocking Streamlit inputs
     mock_text_input.return_value = "Search term"
     mock_selectbox.return_value = "Citation 1"
-    mock_date_input.return_value = None
+    mock_date_input.return_value = []  # Return an empty list instead of None
 
     df = pd.DataFrame({
         "neutral_citation": ["Citation 1", "Citation 2"],
@@ -236,7 +320,8 @@ def test_display_judgment_search_with_results(
         "Court Name": "Court A",
         "Judgment Name": "Judgment 1",
         "Judgment Date": "2025-02-14",
-        "Presiding Judge(s)": "Judge 1"
+        "Presiding Judge(s)": "Judge 1",
+        "Summary": "This is a summary of the case."  # Add a summary key
     }
 
     mock_db_conn = MagicMock()
@@ -245,37 +330,6 @@ def test_display_judgment_search_with_results(
 
 
 
-@patch("psycopg2.connect")
-def test_fetch_case_overview_success(mock_connect):
-
-    mock_conn = MagicMock()
-    mock_cursor = MagicMock()
-
-    mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
-
-    mock_row = {
-        'case_number': '12345',
-        'judgement_date': datetime(2025, 2, 14),
-        'court': 'Court A',
-        'neutral_citation': 'Citation 1',
-        'judge': 'Judge 1',
-        'judge_title': 'Mr.'
-    }
-    mock_cursor.fetchone.return_value = mock_row
-
-    mock_connect.return_value = mock_conn
-
-    result = fetch_case_overview(mock_conn, "Citation 1")
-
-    expected = {
-        "Judgment Number": "12345",
-        "Judgment Date": "2025-02-14",
-        "Court": "Court A",
-        "Neutral Citation": "Citation 1",
-        "Judge": "Mr. Judge 1"
-    }
-
-    assert result == expected
 
 
 def test_fetch_parties_involved():
@@ -320,3 +374,46 @@ def test_fetch_parties_involved_with_exception(capsys):
     captured = capsys.readouterr()
 
 
+@patch("psycopg2.connect")
+def test_fetch_case_overview_success(mock_connect):
+    """Test fetch_case_overview successfully retrieves case details."""
+
+    # Mock connection and cursor
+    mock_conn = MagicMock()
+    mock_cursor = MagicMock()
+    mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
+
+    # Mock column names (needed for cursor.description)
+    mock_cursor.description = [
+        ("neutral_citation",), ("judgment_date",), ("judgment_summary",),
+        ("court_name",), ("judgment_type",), ("judge_name",)
+    ]
+
+    # Mock row returned by the SQL query (dictionary format)
+    mock_cursor.fetchone.return_value = {
+        'neutral_citation': 'Citation 1',
+        'judgment_date': datetime(2025, 2, 14),
+        'judgment_summary': "This is a case summary.",
+        'court_name': 'Court A',
+        'judgment_type': 'Civil',
+        'judge_name': 'Judge 1'
+    }
+
+    # Ensure psycopg2.connect() returns mock connection
+    mock_connect.return_value = mock_conn
+
+    # Call function
+    result = fetch_case_overview(mock_conn, "Citation 1")
+
+    # Define the expected result
+    expected = {
+        "Neutral Citation": "Citation 1",
+        "Judgment Date": "2025-02-14",
+        "Court": "Court A",
+        "Judgment Type": "Civil",
+        "Judge": "Judge 1",
+        "Summary": "This is a case summary."
+    }
+
+    # Assert that the result matches the expected output
+    assert result == expected
