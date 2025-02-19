@@ -51,7 +51,7 @@ async def download_url(local_folder: str, url: str, file_name: str) -> None:
     file_path = os.path.join(local_folder, file_name)
     async with aiohttp.ClientSession() as session:
         try:
-            async with session.get(url, timeout=30) as response:
+            async with session.get(url, timeout=60) as response:
                 response.raise_for_status()
                 content = await response.read()
                 await asyncio.to_thread(
@@ -59,9 +59,10 @@ async def download_url(local_folder: str, url: str, file_name: str) -> None:
                 )
             logging.info("Downloaded %s to %s", url, file_path)
             await asyncio.sleep(0.5)  
+        except asyncio.TimeoutError:
+            logging.error("Timeout error while downloading %s", url)
         except aiohttp.ClientError as e:
             logging.error("Error downloading file from URL %s: %s", url, str(e))
-            raise
 
 
 async def download_days_judgments(day: datetime, folder_path: str) -> None:
@@ -72,6 +73,8 @@ async def download_days_judgments(day: datetime, folder_path: str) -> None:
         download_tasks = []
         for judgment in daily_judgments:
             download_tasks.append(download_url(folder_path, judgment["link"], judgment["title"]))
-            await asyncio.sleep(0.5)
-        await asyncio.gather(*download_tasks) 
-        logging.info("All judgments for day %s downloaded.", day)
+        
+        for task in download_tasks:
+            await task
+
+        logging.info("All judgments for day %s downloaded.", day.strftime("%B %d %Y"))

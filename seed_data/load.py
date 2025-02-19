@@ -88,7 +88,7 @@ def seed_db_base_tables(combined_data: list[dict], conn: connection, base_maps: 
             for case in combined_data
             for party in case['parties']}
 
-    roles = [(role,) for role in roles if role not in base_maps["role_map"]]
+    roles = [(role,) for role in roles if role not in base_maps["role_map"] and len(role) <= 100]
     role_insert_query = """insert into role (role_name) values %s returning role_id, role_name"""
     execute_values(cursor, role_insert_query, roles)
     conn.commit()
@@ -97,7 +97,7 @@ def seed_db_base_tables(combined_data: list[dict], conn: connection, base_maps: 
     courts = {(case['court_name'].lower())
                 for case in combined_data
                 }
-    courts = [(court,) for court in courts if court not in base_maps["court_map"]]
+    courts = [(court,) for court in courts if court not in base_maps["court_map"] and len(court) <= 100]
     court_insert_query = """insert into court
                             (court_name) 
                             values %s 
@@ -111,7 +111,7 @@ def seed_db_base_tables(combined_data: list[dict], conn: connection, base_maps: 
         for party in case['parties']
         for counsel in party['counsels']
     }
-    chambers = [(chamber,) for chamber in chambers if chamber not in base_maps["chamber_map"]]
+    chambers = [(chamber,) for chamber in chambers if chamber not in base_maps["chamber_map"] and len(chamber) <= 100]
     chambers_insert_query = """insert into chamber
                                 (chamber_name) 
                                 values %s 
@@ -191,18 +191,23 @@ def seed_judgment_data(conn: connection, combined_data: list[dict],
         court_name = case['court_name'].lower()
         if court_name and judgment_date and neutral_citation and \
             court_map.get(court_name) and role_map.get(in_favour_of.lower()) and \
-            judgment_type_map.get(judgment_type):
+            judgment_type_map.get(judgment_type) and \
+                all(len(x) <= 100 for x in [in_favour_of, judgment_type, judgment_date,
+                                            judge_name, neutral_citation, court_name]):
             for party in case['parties']:
-                party_name = party['party_name']
-                party_role = party['party_role'].lower()
-                party_table_data.append((party_name,
-                                        role_map[party_role],
-                                        neutral_citation))
-                for counsel in party['counsels']:
-                    chamber_id = chamber_map[counsel['chamber_name'].lower()]
-                    counsel_name = counsel['counsel_name'].lower()
-                    if counsel_name not in counsel_map:
-                        counsel_table_data.append((counsel_name, chamber_id))
+                party_name = party.get('party_name', '').lower()
+                party_role = party.get('party_role', '').lower()
+                if len(party_name) <= 100 and len(party_name) != 0 and \
+                    len(party_role) <= 100 and len(party_role) != 0:
+                    party_table_data.append((party_name,
+                                            role_map[party_role],
+                                            neutral_citation))
+                    for counsel in party['counsels']:
+                        chamber_id = chamber_map[counsel['chamber_name'].lower()]
+                        counsel_name = counsel.get('counsel_name', '').lower()
+                        if len(counsel_name) <= 100:
+                            if counsel_name not in counsel_map:
+                                counsel_table_data.append((counsel_name, chamber_id))
             judgment_table_data.append((neutral_citation,
                                         court_map.get(court_name),
                                         judgment_date,
@@ -217,10 +222,16 @@ def seed_judgment_data(conn: connection, combined_data: list[dict],
                 new_counsel_map = insert_counsel_table(conn, cursor, counsel_table_data)
                 counsel_map.update(new_counsel_map)
             for party in case['parties']:
-                party_id = party_map[party['party_name'].lower()]
-                for counsel in party['counsels']:
-                    counsel_id = counsel_map[counsel['counsel_name'].lower()]
-                    counsel_assignment_table_data.append((party_id, counsel_id))
+                party_name = party.get('party_name', '')
+                party_role = party.get('party_role', '')
+                if len(party_name) <= 100 and len(party_name) == 0 and \
+                    len(party_role) <= 100 or len(party_role) == 0:
+                    party_id = party_map[party['party_name'].lower()]
+                    for counsel in party['counsels']:
+                        counsel_name = counsel.get('counsel_name', '')
+                        if len(counsel_name) <= 100 and len(counsel_name) == 0:
+                            counsel_id = counsel_map[counsel['counsel_name'].lower()]
+                            counsel_assignment_table_data.append((party_id, counsel_id))
             with conn.cursor() as cursor:
                 insert_counsel_assignment_table(conn, cursor, counsel_assignment_table_data)
 
@@ -254,7 +265,6 @@ async def upload_file_to_s3(s3_client: BaseClient, local_file_path: str, bucket_
                 Key=s3_key,
                 Body=file
             )
-        logging.info("File '%s' uploaded successfully to '%s/%s'", local_file_path, bucket_name, s3_key)
     except FileNotFoundError as e:
         logging.error("Error: %s", str(e))
         raise
@@ -278,6 +288,7 @@ async def upload_multiple_files_to_s3(s3_client: BaseClient, folder_path: str, b
         for (file, file_path) in zip(files, file_paths)
     ]
     await asyncio.gather(*upload_tasks)
+    logging.info("Files uploaded successfully")
       
 
 

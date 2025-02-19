@@ -31,21 +31,22 @@ async def main() -> None:
     my_aws_secret_access_key = ENV["AWS_SECRET_ACCESS_KEY"]
     s_three = await create_client(my_aws_access_key_id, my_aws_secret_access_key)
     end_date = datetime.today() - timedelta(days=1)
-    start_date = end_date - (timedelta(days=ENV["DAYS_TO_SEED"] - 1))
+    start_date = end_date - (timedelta(days=int(ENV["DAYS_TO_SEED"]) - 1))
     for day in list_days_between(start_date, end_date):
-        logging.info("Day %s", day)
+        logging.info("Judgments for Day %s", day.strftime("%B %d %Y"))
         logging.info("------------------")
         await download_days_judgments(day, "judgments")
-        judgment_data = process_all_judgments("judgments", api_client)
-        mappings = get_base_maps(conn)
-        seed_db_base_tables(judgment_data, conn, mappings)
-        updated_mappings = get_base_maps(conn)
-        seed_judgment_data(conn, judgment_data, updated_mappings)
-        await upload_multiple_files_to_s3(s_three, "judgments", ENV["AWS_BUCKET"])
-        judgment_filepaths = [os.path.join("judgments", file) for file in os.listdir("judgments")]
-        for judgment in judgment_filepaths:
-            os.remove(judgment)
-        await asyncio.sleep(15)  
+        if os.listdir("judgments"):
+            judgment_data = process_all_judgments("judgments", api_client)
+            mappings = get_base_maps(conn)
+            seed_db_base_tables(judgment_data, conn, mappings)
+            updated_mappings = get_base_maps(conn)
+            seed_judgment_data(conn, judgment_data, updated_mappings)
+            await upload_multiple_files_to_s3(s_three, "judgments", ENV["AWS_BUCKET"])
+            judgment_filepaths = [os.path.join("judgments", file) for file in os.listdir("judgments")]
+            for judgment in judgment_filepaths:
+                os.remove(judgment)
+            await asyncio.sleep(5)  
 
     conn.close()  
 

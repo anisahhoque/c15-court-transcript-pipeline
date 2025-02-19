@@ -1,4 +1,4 @@
-# Requirements for c15-court-transcript-pipeline
+# Requirements for historical data seeding pipeline
 pytest
 pylint
 pytest-mock
