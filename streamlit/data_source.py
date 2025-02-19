@@ -161,6 +161,7 @@ case_type=None, start_date=None, end_date=None) -> pd.DataFrame:
 
     columns = ["neutral_citation", "judgment_date",
                "judgment_summary", "court_name", "judgment_type"]
+    
     df = pd.DataFrame(result, columns=columns)
 
     return df
@@ -234,10 +235,17 @@ def display_judgment_search(conn: connection) -> None:
 
                 if parties_involved:
                     st.write("### Parties Involved")
-                    for role, names in parties_involved.items():
-                        st.write(f"#### {role}(s)")  # Dynamic role heading
-                        for name in names:
-                            st.write(f"- {name}")
+                    for role in parties_involved:
+                        if len(parties_involved[role]) <= 1:
+                            for party in parties_involved[role]:
+                                st.write(f"#### {role}")
+                                st.write(f"- {party}")
+
+                        elif len(parties_involved[role]) > 1:
+                            st.write(f"#### {role}s")
+                            for party in parties_involved[role]:
+                                st.write(f"- {party}")
+
                 else:
                     st.write("No party information available.")
 
@@ -305,11 +313,12 @@ def fetch_parties_involved(_conn: connection, neutral_citation: str) -> dict:
                 if role not in parties_involved:
                     parties_involved[role] = []
                 parties_involved[role].append(party)
+        
 
 
     except Exception as e:
         print(f"Error fetching parties involved: {e}")
-
+    
     return parties_involved
 
 

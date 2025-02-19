@@ -18,6 +18,8 @@ def mock_dependencies(mocker):
         "mock_get_random_judgment": mocker.patch("Home.get_random_judgment_with_summary_and_date"),
         "mock_st_columns": mocker.patch("streamlit.columns", return_value=(MagicMock(), MagicMock())),
         "mock_st_subheader": mocker.patch("streamlit.subheader"),
+        "mock_cases_by_court": mocker.patch("Home.cases_by_court"),
+        "mock_cases_by_judgment_type": mocker.patch("Home.cases_by_judgment_type")
     }
 
 
@@ -32,6 +34,13 @@ def test_renders_dashboard_title(mock_dependencies):
     main()
     mock_dependencies["mock_dashboard_title"].assert_called_once()
 
+def test_cases_by_court(mock_dependencies):
+    main()
+    mock_dependencies["mock_cases_by_court"].assert_called_once()
+
+def test_cases_by_judgment_type(mock_dependencies):
+    main()
+    mock_dependencies["mock_cases_by_judgment_type"].assert_called_once()
 
 def test_renders_homepage_text(mock_dependencies):
     """Tests if the homepage text function is called."""
