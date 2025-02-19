@@ -32,7 +32,7 @@ jobs:
     - name: Build, tag, and push image to Amazon ECR
       env:
         ECR_REPOSITORY: ${{ secrets.PIPELINE_REPO_URL }}
-        PIPELINE_IMAGE_NAME: judgment-pipeline
+        PIPELINE_IMAGE_NAME: judgment-reader-pipeline
       run: |
         cd daily_pipeline
         docker build -t ${PIPELINE_IMAGE_NAME} --platform linux/amd64 --provenance false .
