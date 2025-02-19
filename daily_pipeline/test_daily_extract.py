@@ -9,7 +9,7 @@ import pytest
 import requests
 from botocore.exceptions import NoCredentialsError, PartialCredentialsError
 
-from extract import (
+from daily_extract import (
     get_judgments_from_atom_feed,
     create_daily_atom_feed_url,
     upload_url_to_s3,
@@ -138,7 +138,7 @@ def test_download_url_logging(tmp_path, mock_requests_get, caplog):
     assert "Error downloading the file from URL:" in caplog.text
 
 
-@patch("extract.client")
+@patch("daily_extract.client")
 def test_create_client(mock_boto_client):
     """Tests the create client function calls the appropriate function with the 
      correct parameters."""
@@ -152,7 +152,7 @@ def test_create_client(mock_boto_client):
     )
 
 
-@patch("extract.client", side_effect=NoCredentialsError)
+@patch("daily_extract.client", side_effect=NoCredentialsError)
 def test_create_client_no_credentials(mock_boto_client, caplog):
     """Tests when there is no credentials when attempting to connect to s3."""
     with caplog.at_level(logging.ERROR):
@@ -161,7 +161,7 @@ def test_create_client_no_credentials(mock_boto_client, caplog):
     assert "Credentials error:" in caplog.text
 
 
-@patch("extract.client", side_effect=PartialCredentialsError(provider="aws", cred_var="test"))
+@patch("daily_extract.client", side_effect=PartialCredentialsError(provider="aws", cred_var="test"))
 def test_create_env_client_partial_credentials(mock_boto_client, caplog):
     """Tests when there is partial credentials when attempting to connect to s3."""
     with caplog.at_level(logging.ERROR):
