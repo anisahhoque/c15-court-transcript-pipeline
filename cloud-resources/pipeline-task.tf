@@ -96,6 +96,10 @@ resource "aws_ecs_task_definition" "pipeline" {
           {
             name = "BUCKET_NAME"
             value = aws_s3_bucket.judgment_xml.id
+          },
+          {
+            name = "OPENAI_KEY"
+            value = var.openai_key
           }
         ]
       portMappings = [

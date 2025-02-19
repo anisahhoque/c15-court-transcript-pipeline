@@ -25,3 +25,7 @@ variable "http_ports" {
     443
   ]
 }
+
+variable "openai_key" {
+  type = string
+}
