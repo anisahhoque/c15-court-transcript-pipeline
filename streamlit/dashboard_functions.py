@@ -70,6 +70,7 @@ def display_judgments_for_court(conn: connection) -> None:
     join judgment_type
     using (judgment_type_id)
     join role r on judgment.in_favour_of = r.role_id 
+    
     """
 
     
@@ -83,8 +84,20 @@ def display_judgments_for_court(conn: connection) -> None:
     if not df.empty:
         df['court_name'] = df['court_name'].str.title()
         selected_court = st.selectbox(
-            "Select a Court", df["court_name"])
+            "Select a Court", df["court_name"].unique())
 
-        st.write(df[df["court_name"] == selected_court.title()])
+        df = df[df["court_name"] == selected_court.title()]
+     
+        ruling_df = df.groupby('in_favour_of').size().reset_index()
+        ruling_df.columns = ['ruling','count']
+   
+   
+        chart_ruling_type = alt.Chart(ruling_df).mark_arc().encode(
+            theta=alt.Theta('count', type='quantitative'),
+            color=alt.Color('ruling',type='nominal')
+        ).properties(title="Number of Rulings by Court")
+
+       
+        st.altair_chart(chart_ruling_type, use_container_width=True)
 
 
