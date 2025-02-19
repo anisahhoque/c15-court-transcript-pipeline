@@ -1,22 +1,14 @@
-# pylint: disable=unused-argument
-"""Test file for extract.py"""
-
-import logging
-from unittest.mock import patch, MagicMock
-from datetime import datetime, timedelta
-
+from aioresponses import aioresponses
+import aiofiles
 import pytest
-import requests
-from botocore.exceptions import NoCredentialsError, PartialCredentialsError
-
+from unittest.mock import AsyncMock, call
+from datetime import datetime, timedelta
 from daily_extract import (
     get_judgments_from_atom_feed,
     create_daily_atom_feed_url,
-    upload_url_to_s3,
     download_url,
-    create_client,
+    download_days_judgments,
 )
-
 BASE_URL = "https://caselaw.nationalarchives.gov.uk/atom.xml?per_page=9999"
 
 def test_create_daily_atom_feed_url():
@@ -29,142 +21,82 @@ def test_create_daily_atom_feed_url():
     )
     assert create_daily_atom_feed_url() == expected_url
 
-@pytest.fixture(name="mock_requests_get")
-def fixture_mock_requests_get(mocker):
-    """Fixture for patching requests.get."""
-    return mocker.patch("requests.get")
 
-def test_get_judgments_from_atom_feed(mock_requests_get):
-    """Tests that the function returns a list of dicts of appropriate values."""
-    mock_response = MagicMock()
-    mock_response.text = """
+@pytest.mark.asyncio
+async def test_get_judgments_from_atom_feed():
+    """Test get_judgments_from_atom_feed with mocked HTTP response."""
+    mock_response = """
     <feed>
         <entry>
-            <title>Test judgment</title>
-            <link rel="alternate" href="https://caselaw.nationalarchives.gov.uk/ewca/civ/2025/108" />
+            <link rel="alternate" href="https://caselaw.nationalarchives.gov.uk/id1"/>
+        </entry>
+        <entry>
+            <link rel="alternate" href="https://caselaw.nationalarchives.gov.uk/id2"/>
         </entry>
     </feed>
     """
-    mock_requests_get.return_value = mock_response
-    mock_requests_get.return_value.raise_for_status = MagicMock()
-    expected = [{
-        "title": "ewca-civ-2025-108.xml",
-        "link": "https://caselaw.nationalarchives.gov.uk/ewca/civ/2025/108/data.xml"
-    }]
-    assert get_judgments_from_atom_feed("dummy_url") == expected
-    mock_requests_get.assert_called_once_with("dummy_url", timeout=30)
+    
+    with aioresponses() as mock_server:
+        mock_server.get("https://fake-url.com", status=200, body=mock_response)
+        
+        result = await get_judgments_from_atom_feed("https://fake-url.com")
+        assert len(result) == 2
+        assert result[0]["title"] == "id1.xml"
+        assert result[0]["link"] == "https://caselaw.nationalarchives.gov.uk/id1/data.xml"
+        assert result[1]["title"] == "id2.xml"
+        assert result[1]["link"] == "https://caselaw.nationalarchives.gov.uk/id2/data.xml"
 
 
-def test_get_judgments_from_atom_feed_logging(mock_requests_get, caplog):
-    """Tests when the function raises a requestexception, including its log message."""
-    mock_response = MagicMock()
-    mock_response.raise_for_status.side_effect = \
-        requests.exceptions.RequestException("Request failed")
-    mock_requests_get.return_value = mock_response
-    with caplog.at_level(logging.ERROR):
-        with pytest.raises(requests.exceptions.RequestException):
-            get_judgments_from_atom_feed("dummy_url")
-    assert "Error requesting data from URL:" in caplog.text
+@pytest.mark.asyncio
+async def test_download_url(tmp_path):
+    """Test download_url with mocked HTTP response."""
+    mock_file_content = b"dummy content"
+    with aioresponses() as mock_server:
+        mock_server.get("<https://fake-url.com/data.xml>", status=200, body=mock_file_content)
+        
+        local_folder = tmp_path / "judgments"
+        local_folder.mkdir()
+        
+        await download_url(str(local_folder), "<https://fake-url.com/data.xml>", "test_file.xml")
+
+        file_path = local_folder / "test_file.xml"
+        async with aiofiles.open(file_path, "rb") as f:
+            file_content = await f.read()
+        assert file_content == mock_file_content
 
 
-parameters = [
-        ("https://example.com/file1.xml", "file1.xml", b"file1 content"),
-        ("https://example.com/file2.json", "file2.json", b"file2 content"),
-        ("https://example.com/file3.csv", "file3.csv", b"file3 content"),
-        ("https://example.com/file4.txt", "file4.txt", b"file4 content"),
-        ("https://example.com/file5.html", "file5.html", b"file5 content"),
-    ]
-
-@pytest.mark.parametrize(
-    "url, filename, content",
-    parameters,
-)
-def test_upload_url_to_s3(mock_requests_get, url, filename, content):
-    """Tests that the upload_url_to_s3 function correctly fetches and uploads files."""
-    mock_s3_client = MagicMock()
-    mock_response = MagicMock()
-    mock_response.content = content
-    mock_requests_get.return_value = mock_response
-    mock_requests_get.return_value.raise_for_status = MagicMock()
-
-    upload_url_to_s3(mock_s3_client, url, "test-bucket", filename)
-
-    mock_requests_get.assert_called_once_with(url, timeout=30)
-    mock_s3_client.put_object.assert_called_once_with(
-        Bucket="test-bucket", Key=filename, Body=content
+@pytest.mark.asyncio
+async def test_download_days_judgments(mocker):
+    """Test downloading all of yesterday's judgments."""
+    mock_get_judgments = mocker.patch(
+        "daily_extract.get_judgments_from_atom_feed",
+        new_callable=AsyncMock,
+        return_value=[
+            {
+                "title": "judgment1.xml",
+                "link": "https://mock-link.com/judgment1/data.xml",
+            },
+            {
+                "title": "judgment2.xml",
+                "link": "https://mock-link.com/judgment2/data.xml",
+            },
+        ],
     )
 
+    mock_download_url = mocker.patch("daily_extract.download_url", new_callable=AsyncMock)
 
-def test_upload_url_to_s3_logging(mock_requests_get, caplog):
-    """Tests when the function raises a requestexception, including its log message."""
-    mock_s3_client = MagicMock()
-    mock_response = MagicMock()
-    mock_response.raise_for_status.side_effect = \
-        requests.exceptions.RequestException("Download failed")
-    mock_requests_get.return_value = mock_response
-    with caplog.at_level(logging.ERROR):
-        with pytest.raises(requests.exceptions.RequestException):
-            upload_url_to_s3(mock_s3_client, "https://example.com/file.xml",
-                             "test-bucket", "folder/file.xml")
-    assert "Error downloading the file from URL:" in caplog.text
+    folder_path = "judgments"
+    await download_days_judgments(folder_path)
 
-
-@pytest.mark.parametrize(
-    "url, filename, content",
-    parameters,
-)
-def test_download_url(tmp_path, mock_requests_get, url, filename, content):
-    """Tests that the download_url function correctly fetches and saves files."""
-    mock_response = MagicMock()
-    mock_response.content = content
-    mock_requests_get.return_value = mock_response
-    mock_requests_get.return_value.raise_for_status = MagicMock()
-    download_url(tmp_path, url, filename)
-    file_path = tmp_path / filename
-    with open(file_path, "rb") as f:
-        assert f.read() == content
-    mock_requests_get.assert_called_once_with(url, timeout=30)
-
-
-def test_download_url_logging(tmp_path, mock_requests_get, caplog):
-    """Tests when the function raises a requestexception, including its log message."""
-    mock_response = MagicMock()
-    mock_response.raise_for_status.side_effect = \
-        requests.exceptions.RequestException("Download failed")
-    mock_requests_get.return_value = mock_response
-    with caplog.at_level(logging.ERROR):
-        with pytest.raises(requests.exceptions.RequestException):
-            download_url(tmp_path, "https://example.com/file.xml", "file.xml")
-    assert "Error downloading the file from URL:" in caplog.text
-
-
-@patch("daily_extract.client")
-def test_create_client(mock_boto_client):
-    """Tests the create client function calls the appropriate function with the 
-     correct parameters."""
-    mock_env = {
-        "AWS_ACCESS_KEY": "test-key",
-        "AWS_SECRET_ACCESS_KEY": "test-secret"
-    }
-    create_client(mock_env["AWS_ACCESS_KEY"], mock_env["AWS_SECRET_ACCESS_KEY"])
-    mock_boto_client.assert_called_once_with(
-        "s3", aws_access_key_id="test-key", aws_secret_access_key="test-secret"
+    mock_get_judgments.assert_called_once_with(
+        "https://caselaw.nationalarchives.gov.uk/atom.xml?per_page=9999&from_date_0=18&from_date_1=2&from_date_2=2025&to_date_0=18&to_date_1=2&to_date_2=2025"
     )
 
+    mock_download_url.assert_has_calls(
+        [
+            call("judgments", "https://mock-link.com/judgment1/data.xml", "judgment1.xml"),
+            call("judgments", "https://mock-link.com/judgment2/data.xml", "judgment2.xml"),
+        ],
+        any_order=False
+    )
 
-@patch("daily_extract.client", side_effect=NoCredentialsError)
-def test_create_client_no_credentials(mock_boto_client, caplog):
-    """Tests when there is no credentials when attempting to connect to s3."""
-    with caplog.at_level(logging.ERROR):
-        with pytest.raises(NoCredentialsError):
-            create_client("wrong", "wrong")
-    assert "Credentials error:" in caplog.text
-
-
-@patch("daily_extract.client", side_effect=PartialCredentialsError(provider="aws", cred_var="test"))
-def test_create_env_client_partial_credentials(mock_boto_client, caplog):
-    """Tests when there is partial credentials when attempting to connect to s3."""
-    with caplog.at_level(logging.ERROR):
-        with pytest.raises(PartialCredentialsError):
-            create_client("right", "wrong")
-    assert "Credentials error:" in caplog.text

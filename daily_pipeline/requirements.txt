@@ -1,9 +1,19 @@
-beautifulsoup4
-lxml
-requests
-boto3
-python-dotenv
+# Requirements for historical data seeding pipeline
 pytest
+pylint
 pytest-mock
 pytest-cov
-pylint
+pytest-asyncio
+requests
+pandas
+python-dotenv
+pyarrow
+boto3
+moto
+psycopg2
+openai
+beautifulsoup4
+lxml
+aiohttp
+aioresponses
+aiofiles
