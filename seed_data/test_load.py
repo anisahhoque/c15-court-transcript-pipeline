@@ -2,7 +2,7 @@ import psycopg2.extras
 import pytest
 from unittest import mock
 import psycopg2
-from load import get_judgment_type_mapping, get_db_connection, get_court_mapping, get_counsel_mapping, get_chamber_mapping, get_role_mapping, get_base_maps
+from load import get_judgment_type_mapping, get_db_connection, get_court_mapping, get_counsel_mapping, get_chamber_mapping, get_role_mapping
 
 def test_get_db_connection_successfully():
     mock_conn = mock.MagicMock(spec=psycopg2.extensions.connection)
@@ -83,5 +83,41 @@ def test_get_role_mapping_valid_case():
         'respondent': 1,
         'appellant': 2,
         'defendant': 3
+    }
+    assert result == expected_result
+
+def test_get_counsel_mapping_valid_case():
+    mock_conn = mock.MagicMock()
+    mock_cursor = mock.MagicMock()
+    mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
+    mock_cursor.fetchall.return_value = [
+        { 'counsel_name':'COUnsEl', 'counsel_id':1},
+        { 'counsel_name':'coUnSEL', 'counsel_id':2}
+
+    ]
+
+    result = get_counsel_mapping(mock_conn)
+    
+    expected_result = {
+        'counsel': 1,
+        'counsel': 2
+
+    }
+    assert result == expected_result
+
+def test_get_chamber_mapping_valid_case():
+    mock_conn = mock.MagicMock()
+    mock_cursor = mock.MagicMock()
+    mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
+    mock_cursor.fetchall.return_value = [
+        { 'chamber_name':'XYZ', 'chamber_id':1},
+        { 'chamber_name':'AbC', 'chamber_id':2}
+    ]
+
+    result = get_chamber_mapping(mock_conn)
+    
+    expected_result = {
+        'xyz': 1,
+        'abc': 2,
     }
     assert result == expected_result

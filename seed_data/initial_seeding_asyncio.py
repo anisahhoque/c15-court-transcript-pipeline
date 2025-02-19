@@ -23,7 +23,7 @@ async def main() -> None:
     load_dotenv()
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
-    api_client = get_client(ENV["API_KEY"])
+    api_client = get_client(ENV["OPENAI_KEY"])
     conn = get_db_connection(dbname=ENV['DB_NAME'], user=ENV['DB_USERNAME'],
                              password=ENV['DB_PASSWORD'], host=ENV['DB_HOST'],
                              port=ENV['DB_PORT'])
