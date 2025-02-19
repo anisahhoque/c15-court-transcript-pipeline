@@ -263,17 +263,19 @@ async def upload_file_to_s3(s3_client: BaseClient, local_file_path: str, bucket_
         raise
 
 
-async def upload_multiple_files_to_s3(s3_client: BaseClient, file_paths: list[str], bucket_name: str) -> None:
+async def upload_multiple_files_to_s3(s3_client: BaseClient, folder_path: str, bucket_name: str) -> None:
     """Uploads multiple files to S3 concurrently.
 
     Args:
         s3_client (BaseClient): The S3 client.
-        file_paths (list[str]). list of judgment file paths as strings.
+        folder_path: str. The folder in which the judgment files are currently saved.
         bucket_name (str): The S3 bucket name.
     """
+    files = os.listdir(folder_path)
+    file_paths = [os.path.join(folder_path, file) for file in files]
     upload_tasks = [
-        upload_file_to_s3(s3_client, file_path, bucket_name, os.path.basename(file_path))
-        for file_path in file_paths
+        upload_file_to_s3(s3_client, file_path, bucket_name, file)
+        for (file, file_path) in zip(files, file_paths)
     ]
     await asyncio.gather(*upload_tasks)
       
