@@ -30,8 +30,9 @@ terraform apply
 
 5. You will get two outputs which are needed to configure the actual applications:
 ```
-pipeline_ecr_url = <the url for your pipeline ECR repository>
-server_ecr_url   = <the url for your server ECR repository>
+historical_pipeline_ecr_url = <the url for your historical pipeline ECR url>
+pipeline_ecr_url            = <the url for your pipeline ECR repository>
+server_ecr_url              = <the url for your server ECR repository>
 ```
 
 ## Dev notes
