@@ -65,7 +65,7 @@ def cases_by_judgment_type(conn:connection) -> None:
 
 
 def display_judgments_for_court(conn: connection) -> None:
-    query = """select * from judgment 
+    query = """select judgment_date,judgment_summary,neutral_citation,judge_name,court_name,judgment_type, role_name as in_favour_of from judgment 
     join court using (court_id)
     join judgment_type
     using (judgment_type_id)
@@ -79,12 +79,12 @@ def display_judgments_for_court(conn: connection) -> None:
     df = pd.DataFrame(result)
 
 
+
     if not df.empty:
+        df['court_name'] = df['court_name'].str.title()
         selected_court = st.selectbox(
-            "Select a Judgment", df["court_name"])
+            "Select a Court", df["court_name"])
 
-        if selected_court:
-            col1, col2 = st.columns(2)  # Create two side-by-side columns
-
+        st.write(df[df["court_name"] == selected_court.title()])
 
 
