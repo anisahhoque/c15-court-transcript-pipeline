@@ -60,8 +60,9 @@ def cases_by_judgment_type(conn:connection) -> None:
         tooltip=['Judgment Type', 'Case Count']
     ).properties(title="Number of Judgments by Judgment Type")
 
-    # Display chart in Streamlit
+
     st.altair_chart(chart_judgment_type, use_container_width=True)
+
 
 
 def display_judgments_for_court(conn: connection) -> None:
@@ -83,10 +84,27 @@ def display_judgments_for_court(conn: connection) -> None:
 
     if not df.empty:
         df['court_name'] = df['court_name'].str.title()
+        df['judgment_date'] = pd.to_datetime(df['judgment_date'])
+        min_date = df['judgment_date'].min().date()  
+        max_date = df['judgment_date'].max().date()   
         selected_court = st.selectbox(
             "Select a Court", df["court_name"].unique())
+        date_range = st.date_input("Select Date Range", 
+                        value=[min_date, max_date],
+                        min_value=min_date,
+                        max_value=max_date,   
+                        key="date_range")
 
+
+        if len(date_range) == 2:
+            start_date, end_date = date_range
+            start_date = pd.to_datetime(start_date)  # Convert to datetime if it's a date or string
+            end_date = pd.to_datetime(end_date)  
+            df = df[(df['judgment_date'] >= start_date) & (df['judgment_date'] <= end_date)]
+        else:
+            start_date, end_date = None, None
         df = df[df["court_name"] == selected_court.title()]
+
      
         ruling_df = df.groupby('in_favour_of').size().reset_index()
         ruling_df.columns = ['ruling','count']
@@ -100,4 +118,6 @@ def display_judgments_for_court(conn: connection) -> None:
        
         st.altair_chart(chart_ruling_type, use_container_width=True)
 
-
+        st.write(f'Number of cases for the date range: {start_date.date()} - {end_date.date()} - {df.shape[0]} cases')
+    else:
+        st.write("No results found for your search.")
