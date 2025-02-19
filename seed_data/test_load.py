@@ -1,8 +1,14 @@
+#pylint:disable=unused-variable
+import os
+
 import psycopg2.extras
 import pytest
 from unittest import mock
+from unittest.mock import MagicMock, AsyncMock, ANY
 import psycopg2
-from load import get_judgment_type_mapping, get_db_connection, get_court_mapping, get_counsel_mapping, get_chamber_mapping, get_role_mapping, get_base_maps
+from load import (get_judgment_type_mapping, get_db_connection,
+                  get_court_mapping, get_role_mapping, 
+                  upload_file_to_s3, upload_multiple_files_to_s3)
 
 def test_get_db_connection_successfully():
     mock_conn = mock.MagicMock(spec=psycopg2.extensions.connection)
@@ -85,3 +91,58 @@ def test_get_role_mapping_valid_case():
         'defendant': 3
     }
     assert result == expected_result
+
+
+test_files = [f"test_file_{i}.txt" for i in range(1, 21)]
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("file_name", test_files)
+async def test_upload_file_to_s3(file_name):
+    s3_client = MagicMock()
+    bucket_name = "test-bucket"
+    s3_key = file_name
+
+    with open(file_name, "w") as f:
+        f.write("test data")
+
+    try:
+        await upload_file_to_s3(s3_client, file_name, bucket_name, s3_key)
+        s3_client.put_object.assert_called_once_with(Bucket=bucket_name, Key=s3_key, Body=ANY)
+    finally:
+        os.remove(file_name)  
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("num_files", [n for n in range(1, 50, 5)])
+async def test_upload_multiple_files_to_s3(num_files):
+    s3_client = MagicMock()
+    folder_path = "test_folder"
+    bucket_name = "test-bucket"
+    os.makedirs(folder_path, exist_ok=True)
+
+    test_files = [f"test_file_{i}.txt" for i in range(1, num_files + 1)]
+
+    for file in test_files:
+        with open(os.path.join(folder_path, file), "w") as f:
+            f.write("test data")
+
+    try:
+        await upload_multiple_files_to_s3(s3_client, folder_path, bucket_name)
+        assert s3_client.put_object.call_count == num_files
+    finally:
+        for file in test_files:
+            os.remove(os.path.join(folder_path, file))
+        os.rmdir(folder_path)
+
+
+@pytest.mark.asyncio
+async def test_upload_file_to_s3_file_not_found():
+    s3_client = AsyncMock()
+    local_file_path = "non_existent_file.txt"
+    bucket_name = "test-bucket"
+    s3_key = "uploaded_file.txt"
+    
+    with pytest.raises(FileNotFoundError):
+        await upload_file_to_s3(s3_client, local_file_path, bucket_name, s3_key)
+    
+    s3_client.put_object.assert_not_called()

@@ -4,7 +4,7 @@ from unittest.mock import patch, Mock, mock_open
 import pytest
 from openai import OpenAI
 from openai.types.chat import ChatCompletion, ChatCompletionMessage
-from prompt_engineering import get_client, get_xml_data, get_case_summaries
+from prompt_engineering import get_client, get_xml_data, get_case_summary
 
 SAMPLE_XML_1 = """<?xml version="1.0" encoding="UTF-8"?>
 <judgment>
@@ -160,7 +160,7 @@ def test_get_list_xml_data_return_type():
 
 def test_get_case_summaries_successful_call(mock_openai_client):
     """Test successful API call and response parsing"""
-    result = get_case_summaries(
+    result = get_case_summary(
         model="test-model",
         client=mock_openai_client,
         prompt="Test prompt"
@@ -176,7 +176,7 @@ def test_get_case_summaries_successful_call(mock_openai_client):
 
 def test_get_case_summaries_data_structure(mock_openai_client):
     """Test the structure of returned data matches expected schema"""
-    result = get_case_summaries(
+    result = get_case_summary(
         model="test-model",
         client=mock_openai_client,
         prompt="Test prompt"

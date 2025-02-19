@@ -30,8 +30,8 @@ async def main() -> None:
     my_aws_access_key_id = ENV["AWS_ACCESS_KEY"]
     my_aws_secret_access_key = ENV["AWS_SECRET_ACCESS_KEY"]
     s_three = await create_client(my_aws_access_key_id, my_aws_secret_access_key)
-    start_date = datetime(2025, 1, 1)
-    end_date = datetime.today()
+    end_date = datetime.today() - timedelta(days=1)
+    start_date = end_date - (timedelta(days=ENV["DAYS_TO_SEED"] - 1))
     for day in list_days_between(start_date, end_date):
         logging.info("Day %s", day)
         logging.info("------------------")
