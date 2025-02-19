@@ -57,8 +57,7 @@ def display_as_table(results: list) -> None:
 
 @st.cache_resource
 def get_most_recent_judgment(_conn: connection) -> dict:
-    """Returns the latest judgment with details."""
-    
+    """Returns the latest judgment with details."""    
     query = """
     SELECT
         j.neutral_citation, 
@@ -71,7 +70,6 @@ def get_most_recent_judgment(_conn: connection) -> dict:
         j.judgment_date DESC
     LIMIT 1;
     """
-    
     with _conn.cursor() as cur:
         cur.execute(query)
         return cur.fetchone()  # Returns the latest judgment record
@@ -93,7 +91,7 @@ def display_judgment(judgment_data:dict) -> None:
         st.write("No judgment found.")
 
 
-@st.cache_resource(ttl=86400)  # 86400 seconds = 24 hours
+@st.cache_resource(ttl=86400)
 def get_random_judgment_with_summary_and_date(_conn: connection) -> dict:
     """Returns a random judgment from the database each day."""
     try:
@@ -112,33 +110,33 @@ def get_random_judgment_with_summary_and_date(_conn: connection) -> dict:
             cur.execute(query)
             result = cur.fetchone()
 
-            if not result:
-                return None
-            return result
+            if result:
+                return result
 
     except Exception as e:
         print(f"Error: {e}")
         return None
 
 
-
-@st.cache_resource
-def fetch_judgments(_conn: connection, search_query="",
-court=None, case_type=None, judgment_date=None) -> pd.DataFrame:
-    """Returns all judgments from the database."""
+def fetch_judgments(_conn: connection, search_query="", court=None,
+case_type=None, start_date=None, end_date=None) -> pd.DataFrame:
+    """Returns filtered judgments from the database."""
     query = """
-        SELECT j.neutral_citation, j.judgement_date, a.summary AS argument_summary, c.court_name
+        SELECT j.neutral_citation, j.judgment_date, 
+               CONCAT(SUBSTRING(j.judgment_summary FROM 1 FOR 20), '...') AS judgment_summary,  -- Truncated summary with "..."
+               c.court_name, jt.judgment_type, j.judgment_summary AS full_judgment_summary
         FROM judgment j
-        LEFT JOIN argument a ON j.neutral_citation = a.neutral_citation
         LEFT JOIN court c ON j.court_id = c.court_id
+        LEFT JOIN judgment_type jt ON j.judgment_type_id = jt.judgment_type_id
         WHERE 1=1
     """
     filters = []
     params = []
 
+    # Full-text search query, including the judgment summary
     if search_query:
         filters.append(
-            f"(j.neutral_citation LIKE %s OR a.summary LIKE %s)"
+            f"(j.neutral_citation LIKE %s OR j.judgment_summary LIKE %s)"
         )
         params.extend([f"%{search_query}%", f"%{search_query}%"])
 
@@ -147,12 +145,12 @@ court=None, case_type=None, judgment_date=None) -> pd.DataFrame:
         params.append(court)
 
     if case_type and case_type != "All":
-        filters.append("a.summary LIKE %s")
+        filters.append("jt.judgment_type LIKE %s")
         params.append(f"%{case_type}%")
 
-    if judgment_date:
-        filters.append("j.judgement_date = %s")
-        params.append(judgment_date)
+    if start_date and end_date:
+        filters.append("j.judgment_date BETWEEN %s AND %s")
+        params.extend([start_date, end_date])
 
     if filters:
         query += " AND " + " AND ".join(filters)
@@ -161,8 +159,9 @@ court=None, case_type=None, judgment_date=None) -> pd.DataFrame:
         cursor.execute(query, tuple(params))
         result = cursor.fetchall()
 
-    columns = ["neutral_citation", "judgement_date",
-               "argument_summary", "court_name"]
+    columns = ["neutral_citation", "judgment_date",
+               "judgment_summary", "court_name", "judgment_type"]
+    
     df = pd.DataFrame(result, columns=columns)
 
     return df
@@ -176,28 +175,39 @@ def display_judgment_search(conn: connection) -> None:
     col1, col2, col3 = st.columns([1, 1, 2])
 
     with col1:
-        court_filter = st.selectbox(
-            "Filter by Court", ["All", "Court A", "Court B", "Court C"]
-        )
+        # Fetch courts dynamically from the database
+        query = "SELECT DISTINCT court_name FROM court"
+        with conn.cursor() as cursor:
+            cursor.execute(query)
+            court_names = [row["court_name"] for row in cursor.fetchall()]
+
+        # "All" as a default option
+        court_names.insert(0, "All")
+
+        court_filter = st.selectbox("Filter by Court", court_names)
 
     with col2:
         type_filter = st.selectbox(
-            "Filter by Type", ["All", "Civil", "Criminal", "Family", "Labor"]
-        )
+            "Filter by Type", ["All", "Civil", "Criminal"])
 
     with col3:
-        date_filter = st.date_input("Select Date", None)
+        date_range = st.date_input("Select Date Range", [], key="date_range")
 
+        # If a date range is selected, extract the start and end dates
+        if len(date_range) == 2:
+            start_date, end_date = date_range
+        else:
+            start_date, end_date = None, None
+
+    # Fetch the judgments based on the selected filters
     df = fetch_judgments(conn, search_query, court_filter,
-                         type_filter, date_filter)
+                         type_filter, start_date, end_date)
 
     if not df.empty:
         st.dataframe(df, hide_index=True, use_container_width=True)
 
         selected_citation = st.selectbox(
-            "Select a Judgment", df["neutral_citation"]
-        )
-
+            "Select a Judgment", df["neutral_citation"])
 
         if selected_citation:
             col1, col2 = st.columns(2)  # Create two side-by-side columns
@@ -207,76 +217,88 @@ def display_judgment_search(conn: connection) -> None:
 
                 if case_overview:
                     st.write("### Case Overview")
-                    for key, value in case_overview.items():
-                        st.write(f"**{key}:** {value}")
+                    st.write(
+                        f"**Neutral Citation:** {case_overview.get('Neutral Citation')}")
+                    st.write(
+                        f"**Judgment Date:** {case_overview.get('Judgment Date')}")
+                    st.write(f"**Court Name:** {case_overview.get('Court')}")
+                    st.write(
+                        f"**Judgment Type:** {case_overview.get('Judgment Type')}")
+                    st.write(f"**Judge(s):** {case_overview.get('Judge')}")
                 else:
                     st.write("No detailed overview available.")
 
             with col2:
+                # Fetch and display parties involved
                 parties_involved = fetch_parties_involved(
                     conn, selected_citation)
 
                 if parties_involved:
                     st.write("### Parties Involved")
-                    for role, names in parties_involved.items():
-                        st.write(f"#### {role}(s)")  # Dynamic role heading
-                        for name in names:
-                            st.write(f"- {name}")
+                    for role in parties_involved:
+                        if len(parties_involved[role]) <= 1:
+                            for party in parties_involved[role]:
+                                st.write(f"#### {role}")
+                                st.write(f"- {party}")
+
+                        elif len(parties_involved[role]) > 1:
+                            st.write(f"#### {role}s")
+                            for party in parties_involved[role]:
+                                st.write(f"- {party}")
+
                 else:
                     st.write("No party information available.")
+
+            # Display the full judgment summary
+            judgment_summary = case_overview["Summary"]
+            st.write("### Full Judgment Summary")
+            st.write(judgment_summary)
+
     else:
         st.write("No results found for your search.")
 
 
-
-
-def fetch_case_overview(conn:connection, neutral_citation:str) -> dict:
-    """Returns the overview of a selected judgment, including the judge's title and name."""
+def fetch_case_overview(conn: connection, neutral_citation: str) -> dict:
+    """Returns the overview of a selected judgment."""
     query = """
         SELECT 
-            c.case_number,
-            j.judgement_date,
-            c2.court_name AS court,
             j.neutral_citation,
-            j1.judge_name AS judge,
-            t.title_name AS judge_title
+            j.judgment_date,
+            j.judgment_summary,
+            c.court_name,
+            jt.judgment_type,
+            j.judge_name
         FROM judgment j
-        LEFT JOIN "case" c ON j.neutral_citation = c.neutral_citation
-        LEFT JOIN court c2 ON j.court_id = c2.court_id
-        LEFT JOIN judge j1 ON j.neutral_citation = j1.neutral_citation
-        LEFT JOIN title t ON j1.title_id = t.title_id
-        LEFT JOIN argument a ON j.neutral_citation = a.neutral_citation
+        LEFT JOIN court c ON j.court_id = c.court_id
+        LEFT JOIN judgment_type jt ON j.judgment_type_id = jt.judgment_type_id
         WHERE j.neutral_citation = %s;
     """
     with conn.cursor() as cursor:
         cursor.execute(query, (neutral_citation,))
         result = cursor.fetchone()
 
-    if result:
-        judge_full_name = f"{result.get('judge_title', 'N/A')} {result.get('judge', 'N/A')}"
-
-        case_overview = {
-            "Judgment Number": result.get('case_number', "N/A"),
-            "Judgment Date": result.get('judgement_date', "N/A").strftime('%Y-%m-%d')
-            if result.get('judgement_date') else "N/A",
-            "Court": result.get('court', "N/A"),
-            "Neutral Citation": result.get('neutral_citation', "N/A"),
-            "Judge": judge_full_name
-        }
-        return case_overview
-
+    if not result:
+        return None
+    case_overview = {
+        "Neutral Citation": result.get('neutral_citation', "N/A"),
+        "Judgment Date": result.get('judgment_date', "N/A").strftime('%Y-%m-%d')
+        if result.get('judgment_date') else "N/A",
+        "Court": result.get('court_name', "N/A"),
+        "Judgment Type": result.get('judgment_type', "N/A"),
+        "Judge": result.get('judge_name', "N/A"),
+        "Summary": result.get('judgment_summary', "N/A")
+    }
+    return case_overview
 
 def fetch_parties_involved(_conn: connection, neutral_citation: str) -> dict:
     """
     Returns a dictionary mapping role types to lists of party names.
     """
-    query = """
-        SELECT r.role_name, p.party_name
+    query = """SELECT r.role_name, p.party_name
         FROM party p
         JOIN role r ON p.role_id = r.role_id
-        JOIN "case" c ON p.case_id = c.case_id
-        WHERE c.neutral_citation = %s;
-    """
+        JOIN judgment j ON p.neutral_citation = j.neutral_citation
+        WHERE j.neutral_citation = %s"""
 
     parties_involved = {}
 
@@ -284,8 +306,6 @@ def fetch_parties_involved(_conn: connection, neutral_citation: str) -> dict:
         with _conn.cursor() as cur:
             cur.execute(query, (neutral_citation,))
             results = cur.fetchall()
-
-            # Iterate over results and populate the dictionary
             for row in results:
                 role = row['role_name']
                 party = row['party_name']
@@ -293,9 +313,13 @@ def fetch_parties_involved(_conn: connection, neutral_citation: str) -> dict:
                 if role not in parties_involved:
                     parties_involved[role] = []
                 parties_involved[role].append(party)
+        
 
 
     except Exception as e:
         print(f"Error fetching parties involved: {e}")
-
+    
     return parties_involved
+
+
+
