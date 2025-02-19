@@ -6,10 +6,13 @@ import streamlit as st
 
 def cases_by_court(conn:connection) -> None:
     """Returns cases by court chart diagram."""
-    query = """SELECT court_name, COUNT(*) AS case_count
+    query = """SELECT court_name as "Court", COUNT(*) AS "Case Count"
     FROM judgment
     JOIN court ON judgment.court_id = court.court_id
-    GROUP BY court_name"""
+    GROUP BY "Court"
+    ORDER BY "Case Count" DESC
+    LIMIT 10;
+    """
 
     # Execute query using connection
     with conn.cursor() as cursor:
@@ -18,15 +21,15 @@ def cases_by_court(conn:connection) -> None:
 
     # Prepare data for visualization
     df_court_cases = pd.DataFrame(result)
-    df_court_cases["court_name"] = df_court_cases["court_name"].str.title()
+    df_court_cases["Court"] = df_court_cases["Court"].str.title()
 
     # Create chart using Altair
     chart_court_cases = alt.Chart(df_court_cases).mark_bar().encode(
-        x='court_name',
-        y='case_count',
-        color='court_name',
-        tooltip=['court_name', 'case_count']
-    ).properties(title="Number of Cases by Court")
+        x=alt.X('Court', title="Court Name", sort="-y"),
+        y=alt.Y('Case Count', title="No. of Total Judgments"),
+        color=alt.Color('Court', title = "Courts"),
+        tooltip=['Court', 'Case Count']
+    ).properties(title="Number of Judgments by Court")
 
     # Display chart in Streamlit
     st.altair_chart(chart_court_cases, use_container_width=True)
@@ -34,7 +37,7 @@ def cases_by_court(conn:connection) -> None:
 
 def cases_by_judgment_type(conn:connection) -> None:
     """Displays cases by judgment type in a pie chart on streamlit."""
-    query = """SELECT judgment_type, COUNT(*) AS case_count
+    query = """SELECT judgment_type as "Judgment Type", COUNT(*) AS "Case Count"
     FROM judgment
     JOIN judgment_type
     ON judgment.judgment_type_id = judgment_type.judgment_type_id
@@ -47,13 +50,14 @@ def cases_by_judgment_type(conn:connection) -> None:
 
     # Prepare data for visualization
     df_judgment_type = pd.DataFrame(result)
+    df_judgment_type["Judgment Type"] = df_judgment_type["Judgment Type"].str.title()
 
     # Create chart using Altair
     chart_judgment_type = alt.Chart(df_judgment_type).mark_arc().encode(
-        theta='case_count',
-        color='judgment_type',
-        tooltip=['judgment_type', 'case_count']
-    ).properties(title="Number of Cases by Judgment Type")
+        theta=alt.Theta('Case Count', title="Types"),
+        color=alt.Color('Judgment Type', title="Types"),
+        tooltip=['Judgment Type', 'Case Count']
+    ).properties(title="Number of Judgments by Judgment Type")
 
     # Display chart in Streamlit
     st.altair_chart(chart_judgment_type, use_container_width=True)
