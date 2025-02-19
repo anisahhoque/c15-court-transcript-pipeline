@@ -1,5 +1,6 @@
 #pylint:disable=unused-variable
 import os
+import logging
 
 import psycopg2.extras
 import pytest
@@ -136,13 +137,15 @@ async def test_upload_multiple_files_to_s3(num_files):
 
 
 @pytest.mark.asyncio
-async def test_upload_file_to_s3_file_not_found():
+async def test_upload_file_to_s3_file_not_found(caplog):
     s3_client = AsyncMock()
     local_file_path = "non_existent_file.txt"
     bucket_name = "test-bucket"
     s3_key = "uploaded_file.txt"
     
-    with pytest.raises(FileNotFoundError):
+    with caplog.at_level(logging.ERROR):
         await upload_file_to_s3(s3_client, local_file_path, bucket_name, s3_key)
-    
+
     s3_client.put_object.assert_not_called()
+    
+    assert f"Error: File not found: {local_file_path}" in caplog.text

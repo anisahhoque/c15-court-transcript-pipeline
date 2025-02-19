@@ -1,16 +1,20 @@
 """Script for seeding initial database judgment data."""
 
-from dotenv import load_dotenv
+
 import os
 from os import environ as ENV
 from datetime import datetime, timedelta
 import logging
 import asyncio
 
+from dotenv import load_dotenv
+
 from extract import download_days_judgments
 from prompt_engineering import get_client
 from transform import process_all_judgments
-from load import get_db_connection, get_base_maps, seed_db_base_tables, seed_judgment_data, create_client, upload_multiple_files_to_s3
+from load import (get_db_connection, get_base_maps,
+                  seed_db_base_tables, seed_judgment_data,
+                  create_client, upload_multiple_files_to_s3)
 
 
 def list_days_between(start_date: datetime, end_date: datetime):
@@ -43,17 +47,14 @@ async def main() -> None:
             updated_mappings = get_base_maps(conn)
             seed_judgment_data(conn, judgment_data, updated_mappings)
             await upload_multiple_files_to_s3(s_three, "judgments", ENV["AWS_BUCKET"])
-            judgment_filepaths = [os.path.join("judgments", file) for file in os.listdir("judgments")]
+            judgment_filepaths = [os.path.join("judgments", file) for
+                                  file in os.listdir("judgments")]
             for judgment in judgment_filepaths:
                 os.remove(judgment)
-            await asyncio.sleep(5)  
+            await asyncio.sleep(5)
 
-    conn.close()  
+    conn.close()
 
 
 if __name__ == "__main__":
     asyncio.run(main())
-
-        
-
-        

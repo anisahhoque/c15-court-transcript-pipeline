@@ -46,7 +46,7 @@ def get_role_mapping(conn: connection) -> dict:
     with conn.cursor() as cursor:
         cursor.execute("""select role_id, role_name from role""")
         return {x["role_name"].lower(): x["role_id"] for x in cursor.fetchall()}
-        
+
 
 def get_chamber_mapping(conn: connection) -> dict:
     """Gets map of existing chambers from database.
@@ -54,7 +54,7 @@ def get_chamber_mapping(conn: connection) -> dict:
     with conn.cursor() as cursor:
         cursor.execute("""select chamber_name, chamber_id from chamber""")
         return {x["chamber_name"].lower(): x["chamber_id"] for x in cursor.fetchall()}
-    
+
 
 def get_counsel_mapping(conn: connection) -> dict:
     """Gets map of existing counsels from database.
@@ -97,7 +97,8 @@ def seed_db_base_tables(combined_data: list[dict], conn: connection, base_maps: 
     courts = {(case['court_name'].lower())
                 for case in combined_data
                 }
-    courts = [(court,) for court in courts if court not in base_maps["court_map"] and len(court) <= 100]
+    courts = [(court,) for court in courts if court not in base_maps["court_map"] \
+              and len(court) <= 100]
     court_insert_query = """insert into court
                             (court_name) 
                             values %s 
@@ -111,18 +112,20 @@ def seed_db_base_tables(combined_data: list[dict], conn: connection, base_maps: 
         for party in case['parties']
         for counsel in party['counsels']
     }
-    chambers = [(chamber,) for chamber in chambers if chamber not in base_maps["chamber_map"] and len(chamber) <= 100]
+    chambers = [(chamber,) for chamber in chambers if chamber not in base_maps["chamber_map"] \
+                and len(chamber) <= 100]
     chambers_insert_query = """insert into chamber
                                 (chamber_name) 
                                 values %s 
                                 returning chamber_id, chamber_name"""
     execute_values(cursor, chambers_insert_query, chambers)
-    
+
     conn.commit()
     cursor.close()
 
 
-def insert_judgment_table(conn: connection, cursor: connection.cursor, judgment_table_data: list[tuple]) -> None:
+def insert_judgment_table(conn: connection, cursor: connection.cursor,
+                          judgment_table_data: list[tuple]) -> None:
     """Inserts judgment table data into judgment table.
     Returns None."""
     judgment_table_insert_query = """insert into judgment
@@ -132,7 +135,8 @@ def insert_judgment_table(conn: connection, cursor: connection.cursor, judgment_
     conn.commit()
 
 
-def insert_party_table(conn: connection, cursor: connection.cursor, party_table_data: list[tuple]) -> dict:
+def insert_party_table(conn: connection, cursor: connection.cursor,
+                       party_table_data: list[tuple]) -> dict:
     """Inserts party table data into party table.
     Returns map of party names and ids."""
     party_table_insert_query = """insert into party (party_name, role_id, neutral_citation)
@@ -144,7 +148,8 @@ def insert_party_table(conn: connection, cursor: connection.cursor, party_table_
     return party_map
 
 
-def insert_counsel_table(conn: connection, cursor: connection.cursor, counsel_table_data: list[tuple]) -> dict:
+def insert_counsel_table(conn: connection, cursor: connection.cursor,
+                         counsel_table_data: list[tuple]) -> dict:
     """Inserts counsel table data into counsel table.
     Returns map of new counsel names and ids."""
     counsel_table_insert_query = """insert into counsel (counsel_name, chamber_id)
@@ -155,7 +160,8 @@ def insert_counsel_table(conn: connection, cursor: connection.cursor, counsel_ta
     return counsel_map
 
 
-def insert_counsel_assignment_table(conn: connection, cursor: connection.cursor, counsel_assignment_table_data: list[tuple]) -> None:
+def insert_counsel_assignment_table(conn: connection, cursor: connection.cursor,
+                                    counsel_assignment_table_data: list[tuple]) -> None:
     """Inserts counsel assignment table data into counsel assignment table.
     Returns None."""
     counsel_assignment_insert_query = """insert into counsel_assignment
@@ -240,8 +246,8 @@ async def create_client(aws_access_key_id: str, aws_secret_access_key: str) -> B
     """Returns a BaseClient object for s3 service specified by the provided keys."""
     try:
         config = Config(
-            retries = {'max_attempts': 10},  
-            max_pool_connections = 50 
+            retries = {'max_attempts': 10},
+            max_pool_connections = 50
         )
         s3_client = client("s3", aws_access_key_id=aws_access_key_id,
                            aws_secret_access_key=aws_secret_access_key,
@@ -253,7 +259,8 @@ async def create_client(aws_access_key_id: str, aws_secret_access_key: str) -> B
         raise
 
 
-async def upload_file_to_s3(s3_client: BaseClient, local_file_path: str, bucket_name: str, s3_key: str) -> None:
+async def upload_file_to_s3(s3_client: BaseClient, local_file_path: str,
+                            bucket_name: str, s3_key: str) -> None:
     """Uploads a locally saved file to an S3 bucket."""
     try:
         if not os.path.exists(local_file_path):
@@ -267,13 +274,13 @@ async def upload_file_to_s3(s3_client: BaseClient, local_file_path: str, bucket_
             )
     except FileNotFoundError as e:
         logging.error("Error: %s", str(e))
-        raise
     except BotoCoreError as e:
-        logging.error("AWS S3 error while uploading file '%s' to '%s/%s': %s", local_file_path, bucket_name, s3_key, str(e))
-        raise
+        logging.error("AWS S3 error while uploading file '%s' to '%s/%s': %s",
+                      local_file_path, bucket_name, s3_key, str(e))
 
 
-async def upload_multiple_files_to_s3(s3_client: BaseClient, folder_path: str, bucket_name: str) -> None:
+async def upload_multiple_files_to_s3(s3_client: BaseClient, folder_path: str,
+                                      bucket_name: str) -> None:
     """Uploads multiple files to S3 concurrently.
 
     Args:
@@ -289,8 +296,3 @@ async def upload_multiple_files_to_s3(s3_client: BaseClient, folder_path: str, b
     ]
     await asyncio.gather(*upload_tasks)
     logging.info("Files uploaded successfully")
-      
-
-
-
-

@@ -1,12 +1,13 @@
 #pylint:disable=unused-variable
 """File for functions to download judgments."""
 
-import aiohttp
+
 import asyncio
 import os
-from os import environ as ENV
 from datetime import datetime
 import logging
+
+import aiohttp
 from bs4 import BeautifulSoup
 
 
@@ -58,7 +59,7 @@ async def download_url(local_folder: str, url: str, file_name: str) -> None:
                     lambda: open(file_path, "wb").write(content)
                 )
             logging.info("Downloaded %s to %s", url, file_path)
-            await asyncio.sleep(0.5)  
+            await asyncio.sleep(0.5)
         except asyncio.TimeoutError:
             logging.error("Timeout error while downloading %s", url)
         except aiohttp.ClientError as e:
@@ -73,7 +74,7 @@ async def download_days_judgments(day: datetime, folder_path: str) -> None:
         download_tasks = []
         for judgment in daily_judgments:
             download_tasks.append(download_url(folder_path, judgment["link"], judgment["title"]))
-        
+
         for task in download_tasks:
             await task
 

@@ -1,7 +1,7 @@
+#pylint:disable=unused-variable
 """This file extracts data from xmls using OpenAI API"""
 import json
 import logging
-from os import environ as ENV
 from dotenv import load_dotenv
 from openai import OpenAI, OpenAIError
 from pydantic import BaseModel
@@ -45,7 +45,6 @@ def get_client(api_key: str) -> OpenAI:
         return client
     except OpenAIError as e:
         logging.error('Failed to return an OpenAI client - %s', str(e))
-        
 
 
 def get_xml_data(filename: str) -> str:
@@ -90,22 +89,7 @@ def get_case_summary(model: str, client: OpenAI, case: str) -> dict:
         response_choices = response.choices[0].message
 
         return json.loads(response_choices.content).get("case_summary")
-    
+
     except OpenAIError as e:
         logging.error('An error occurred while trying to retrieve case information - %s', str(e))
         return []
-
-
-
-if __name__=="__main__":
-    api_client = get_client(ENV["OPENAI_API_KEY"])
-    
-    file_names = ['ewhc_comm_2025_240.xml','ukut_iac_2021_202.xml',
-                  'ewcop_t3_2025_6.xml', 'ewhc_kb_2025_287.xml',
-                    'ewca-civ-2025-113.xml','ukpc_2025_7.xml']
-    json_data =[]
-    for file in file_names:
-        case = get_xml_data(filename=file)
-        case_json = get_case_summary(model=GPT_MODEL,client=api_client,case=case)
-        json_data.append(case_json)
-        print(json_data)
