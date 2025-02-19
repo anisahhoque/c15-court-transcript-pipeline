@@ -12,6 +12,22 @@ from dashboard_functions import cases_by_court, cases_by_judgment_type
 
 def main():
     """Runs the complete scripts."""
+
+    import streamlit as st
+
+
+    st.markdown(
+        """
+        <style>
+            [data-testid="stSidebar"] {
+                width: 200px !important; /* Maximum width */
+            }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+
     load_dotenv()
     dashboard_title()
     homepage_text()
@@ -29,13 +45,10 @@ def main():
         random_judg = get_random_judgment_with_summary_and_date(conn)
         display_judgment(random_judg)
     
-    col1, col2 = st.columns(2)
 
-    with col1:
-        cases_by_court(conn)
+    cases_by_court(conn)
     
-    with col2:
-        cases_by_judgment_type(conn)
+    cases_by_judgment_type(conn)
         
 
 

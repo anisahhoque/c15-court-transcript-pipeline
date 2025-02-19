@@ -29,13 +29,14 @@ def get_most_recent_judgments(_conn: connection) -> list[tuple]:
 
     query = """
     SELECT 
-        j.neutral_citation AS judgment, 
-        j.judge_name AS judge, 
-        c.court_name AS court,
-        jt.judgment_type AS judgment_type
+    j.neutral_citation AS judgment, 
+    j.judge_name AS judge, 
+    c.court_name AS court,
+    jt.judgment_type AS judgment_type
     FROM judgment j
     JOIN court c ON j.court_id = c.court_id
     JOIN judgment_type jt ON j.judgment_type_id = jt.judgment_type_id
+    WHERE j.judgment_date = (SELECT MAX(judgment_date) FROM judgment)
     ORDER BY j.judgment_date DESC;
     """
 
@@ -49,7 +50,12 @@ def display_as_table(results: list) -> None:
     capitalises the column titles, and displays it as a table in Streamlit."""
     df = pd.DataFrame(results)
 
-    df.columns = [col.capitalize() for col in df.columns]
+    if "court" in df.columns:
+        df["court"] = df["court"].str.title()
+
+    
+    df.columns = [col.replace("_", " ") for col in df.columns]
+    df.columns = [col.title() for col in df.columns]
 
     df = df.reset_index(drop=True)
     st.subheader("New Daily Cases")
@@ -204,7 +210,7 @@ def display_judgment_search(conn: connection) -> None:
                          type_filter, start_date, end_date)
 
     if not df.empty:
-        st.dataframe(df, hide_index=True, use_container_width=True)
+        display_as_table(df)
 
         selected_citation = st.selectbox(
             "Select a Judgment", df["neutral_citation"])
@@ -221,10 +227,11 @@ def display_judgment_search(conn: connection) -> None:
                         f"**Neutral Citation:** {case_overview.get('Neutral Citation')}")
                     st.write(
                         f"**Judgment Date:** {case_overview.get('Judgment Date')}")
-                    st.write(f"**Court Name:** {case_overview.get('Court')}")
+                    st.write(f"**Court:** {case_overview.get('Court')}")
                     st.write(
-                        f"**Judgment Type:** {case_overview.get('Judgment Type')}")
-                    st.write(f"**Judge(s):** {case_overview.get('Judge')}")
+                        f"**Case Type:** {case_overview.get('Judgment Type')}")
+                    st.write(f"**Judge:** {case_overview.get('Judge')}")
+                    st.write(f"**In Favour of:** {case_overview.get('In Favour Of').title()}")
                 else:
                     st.write("No detailed overview available.")
 
@@ -267,10 +274,12 @@ def fetch_case_overview(conn: connection, neutral_citation: str) -> dict:
             j.judgment_summary,
             c.court_name,
             jt.judgment_type,
-            j.judge_name
+            j.judge_name,
+            r.role_name
         FROM judgment j
         LEFT JOIN court c ON j.court_id = c.court_id
         LEFT JOIN judgment_type jt ON j.judgment_type_id = jt.judgment_type_id
+        LEFT JOIN role r ON j.in_favour_of = r.role_id
         WHERE j.neutral_citation = %s;
     """
     with conn.cursor() as cursor:
@@ -286,8 +295,10 @@ def fetch_case_overview(conn: connection, neutral_citation: str) -> dict:
         "Court": result.get('court_name', "N/A"),
         "Judgment Type": result.get('judgment_type', "N/A"),
         "Judge": result.get('judge_name', "N/A"),
-        "Summary": result.get('judgment_summary', "N/A")
+        "Summary": result.get('judgment_summary', "N/A"),
+        "In Favour Of": result.get('role_name', "N/A")
     }
+    print(case_overview)
     return case_overview
 
 def fetch_parties_involved(_conn: connection, neutral_citation: str) -> dict:
