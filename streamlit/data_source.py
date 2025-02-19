@@ -168,8 +168,8 @@ case_type=None, start_date=None, end_date=None) -> pd.DataFrame:
     if search_query:
         df = df[df['judgment_summary'].apply(match_judgments_by_judgment_search, args=(search_query,))]
         df = df[(df['neutral_citation'].apply(match_judgments_by_citation_search, args=(search_query,)))| (df['judgment_summary'].apply(match_judgments_by_judgment_search, args=(search_query,)))]
-
     return df
+
 def match_judgments_by_citation_search(df_value: str,search_query: str) -> bool:
     """Uses fuzzy matching to check if the judgment search input matches the contents of the judgments"""
     neutral_citation_score = fuzz.partial_ratio(search_query.lower(), df_value.lower())
