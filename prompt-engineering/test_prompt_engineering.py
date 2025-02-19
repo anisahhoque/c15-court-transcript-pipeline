@@ -4,7 +4,7 @@ from unittest.mock import patch, Mock, mock_open
 import pytest
 from openai import OpenAI
 from openai.types.chat import ChatCompletion, ChatCompletionMessage
-from prompt_engineering import get_client, get_list_xml_data, get_case_summaries
+from prompt_engineering import get_client, get_xml_data, get_case_summaries
 
 SAMPLE_XML_1 = """<?xml version="1.0" encoding="UTF-8"?>
 <judgment>
@@ -154,7 +154,7 @@ def test_get_list_xml_data_multiple_files():
 def test_get_list_xml_data_return_type():
     """Test return type annotations and actual return type"""
     with patch('builtins.open', mock_open(read_data=SAMPLE_XML_1)):
-        result = get_list_xml_data(['test1.xml'])
+        result = get_xml_data(['test1.xml'])
         assert isinstance(result, list)
         assert all(isinstance(item, str) for item in result)
 
