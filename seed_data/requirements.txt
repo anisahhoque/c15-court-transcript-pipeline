@@ -1,5 +1,6 @@
 # Requirements for c15-court-transcript-pipeline
 pytest
+pytest-asyncio
 pylint
 pytest-mock
 pytest-cov

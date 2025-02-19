@@ -4,7 +4,7 @@ from unittest.mock import patch, Mock, mock_open
 import pytest
 from openai import OpenAI
 from openai.types.chat import ChatCompletion, ChatCompletionMessage
-from prompt_engineering import get_client, get_xml_data, get_case_summaries
+from prompt_engineering import get_client, get_xml_data, get_case_summary
 
 SAMPLE_XML_1 = """<?xml version="1.0" encoding="UTF-8"?>
 <judgment>
@@ -131,39 +131,24 @@ def mock_openai_client():
 
 def test_get_client_return_type():
     """Test that get_client returns an OpenAI instance"""
-    with patch.dict('os.environ', {'OPENAI_API_KEY': 'test-key'}):
-        client = get_client()
+    with patch.dict('os.environ', {'OPENAI_KEY': 'test-key'}):
+        client = get_client('test-key')
         assert isinstance(client, OpenAI)
 
 
-def test_get_list_xml_data_multiple_files():
-    """Test reading multiple XML files"""
-    mock_files = {
-        'test1.xml': SAMPLE_XML_1,
-        'test2.xml': SAMPLE_XML_2
-    }
-    def mock_open_files(filename, mode, encoding):
-        return mock_open(read_data=mock_files[filename]).return_value
-    
-    with patch('builtins.open', mock_open_files):
-        result = get_list_xml_data(['test1.xml', 'test2.xml'])
-        assert len(result) == 2
-        assert result[0] == SAMPLE_XML_1
-        assert result[1] == SAMPLE_XML_2
-
-def test_get_list_xml_data_return_type():
+def test_get_xml_data_return_type():
     """Test return type annotations and actual return type"""
     with patch('builtins.open', mock_open(read_data=SAMPLE_XML_1)):
-        result = get_xml_data(['test1.xml'])
-        assert isinstance(result, list)
-        assert all(isinstance(item, str) for item in result)
+        result = get_xml_data('test1.xml')
+        assert isinstance(result, str)
 
-def test_get_case_summaries_successful_call(mock_openai_client):
+
+def test_get_case_summary_successful_call(mock_openai_client):
     """Test successful API call and response parsing"""
-    result = get_case_summaries(
+    result = get_case_summary(
         model="test-model",
         client=mock_openai_client,
-        prompt="Test prompt"
+        case='hi'
     )
 
     mock_openai_client.with_options.assert_called_once_with(timeout=60.0)
@@ -176,10 +161,10 @@ def test_get_case_summaries_successful_call(mock_openai_client):
 
 def test_get_case_summaries_data_structure(mock_openai_client):
     """Test the structure of returned data matches expected schema"""
-    result = get_case_summaries(
+    result = get_case_summary(
         model="test-model",
         client=mock_openai_client,
-        prompt="Test prompt"
+        case= 'hi'
     )
 
     case = result[0]
