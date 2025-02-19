@@ -9,6 +9,7 @@ import streamlit as st
 
 
 
+
 @st.cache_resource
 def get_db_connection() -> connection:
     """Returns a live connection to PostgreSQL database with RealDictCursor as default."""
@@ -52,7 +53,13 @@ def display_as_table(results: list) -> None:
 
     if "court" in df.columns:
         df["court"] = df["court"].str.title()
-
+    if "judgment_type" in df.columns:
+        df["judgment_type"] = df["judgment_type"].str.title()
+    if "judge" in df.columns:
+        df["judge"] = df["judge"].str.title()
+    
+    
+    
     
     df.columns = [col.replace("_", " ") for col in df.columns]
     df.columns = [col.title() for col in df.columns]
@@ -208,6 +215,7 @@ def display_judgment_search(conn: connection) -> None:
     # Fetch the judgments based on the selected filters
     df = fetch_judgments(conn, search_query, court_filter,
                          type_filter, start_date, end_date)
+    df["court_name"] = df["court_name"].str.title()
 
     if not df.empty:
         display_as_table(df)
@@ -230,7 +238,7 @@ def display_judgment_search(conn: connection) -> None:
                     st.write(f"**Court:** {case_overview.get('Court')}")
                     st.write(
                         f"**Case Type:** {case_overview.get('Judgment Type')}")
-                    st.write(f"**Judge:** {case_overview.get('Judge')}")
+                    st.write(f"**Judge(s):** {case_overview.get('Judge')}")
                     st.write(f"**In Favour of:** {case_overview.get('In Favour Of').title()}")
                 else:
                     st.write("No detailed overview available.")
@@ -245,13 +253,13 @@ def display_judgment_search(conn: connection) -> None:
                     for role in parties_involved:
                         if len(parties_involved[role]) <= 1:
                             for party in parties_involved[role]:
-                                st.write(f"#### {role}")
-                                st.write(f"- {party}")
+                                st.write(f"#### {role.title()}")
+                                st.write(f"- {party.title()}")
 
                         elif len(parties_involved[role]) > 1:
                             st.write(f"#### {role}s")
                             for party in parties_involved[role]:
-                                st.write(f"- {party}")
+                                st.write(f"- {party.title()}")
 
                 else:
                     st.write("No party information available.")
@@ -298,7 +306,19 @@ def fetch_case_overview(conn: connection, neutral_citation: str) -> dict:
         "Summary": result.get('judgment_summary', "N/A"),
         "In Favour Of": result.get('role_name', "N/A")
     }
-    print(case_overview)
+
+
+    case_overview = {
+        k: v.title() if isinstance(v, str) and k != "Summary" else v
+        for k, v in case_overview.items()
+    }
+
+    
+
+
+    case_overview["Neutral Citation"] = case_overview["Neutral Citation"].upper()
+
+
     return case_overview
 
 def fetch_parties_involved(_conn: connection, neutral_citation: str) -> dict:

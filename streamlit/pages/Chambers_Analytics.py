@@ -7,13 +7,13 @@ from dashboard_functions import cases_by_court, cases_by_judgment_type  # pylint
 
 from components import dashboard_title  # pylint: disable=import-error
 
+
 def main():
     """Main function to run the analytics page."""
     load_dotenv()
     conn = get_db_connection()
     dashboard_title()
-    cases_by_court(conn)
-    cases_by_judgment_type(conn)
+
 
 if __name__ == "__main__":
     main()
