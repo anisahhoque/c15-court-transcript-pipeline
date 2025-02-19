@@ -1,5 +1,7 @@
 """This script gathers the data sourcing functions."""
 from os import environ as ENV
+from rapidfuzz import fuzz
+
 from psycopg2 import connect
 from psycopg2.extras import RealDictCursor
 from psycopg2.extensions import connection
@@ -134,11 +136,11 @@ case_type=None, start_date=None, end_date=None) -> pd.DataFrame:
     params = []
 
     # Full-text search query, including the judgment summary
-    if search_query:
+    """if search_query:
         filters.append(
             f"(j.neutral_citation LIKE %s OR j.judgment_summary LIKE %s)"
         )
-        params.extend([f"%{search_query}%", f"%{search_query}%"])
+        params.extend([f"%{search_query}%", f"%{search_query}%"])"""
 
     if court and court != "All":
         filters.append("c.court_name = %s")
@@ -163,9 +165,17 @@ case_type=None, start_date=None, end_date=None) -> pd.DataFrame:
                "judgment_summary", "court_name", "judgment_type"]
     
     df = pd.DataFrame(result, columns=columns)
+    if search_query:
+        df = df[(df['neutral_citation'].apply(match_judgments_by_search,args=(search_query,))) | (df['judgment_summary'].apply(match_judgments_by_search,args=(search_query,)))]
 
     return df
 
+def match_judgments_by_search(df_value: str,search_query: str) -> bool:
+    """Uses fuzzy matching to check if the judgment search input matches the contents of the judgments"""
+    neutral_citation_score = fuzz.partial_ratio(search_query.lower(), df_value.lower())
+    judgment_summary_score = fuzz.partial_ratio(search_query.lower(), df_value.lower())
+    if neutral_citation_score > 80 or judgment_summary_score > 20:
+            return True
 
 def display_judgment_search(conn: connection) -> None:
     """Displays the interface for Judgment Search Page on Streamlit."""
