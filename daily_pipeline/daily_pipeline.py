@@ -22,12 +22,12 @@ async def main() -> None:
     load_dotenv()
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
-    api_client = get_client(ENV["API_KEY"])
-    conn = get_db_connection(dbname=ENV['DB_NAME'], user=ENV['DB_USERNAME'],
+    api_client = get_client(ENV["OPENAPI_KEY"])
+    conn = get_db_connection(dbname=ENV['DB_NAME'], user=ENV['DB_USER'],
                              password=ENV['DB_PASSWORD'], host=ENV['DB_HOST'],
                              port=ENV['DB_PORT'])
-    my_aws_access_key_id = ENV["AWS_ACCESS_KEY"]
-    my_aws_secret_access_key = ENV["AWS_SECRET_ACCESS_KEY"]
+    my_aws_access_key_id = ENV["ACCESS_KEY"]
+    my_aws_secret_access_key = ENV["SECRET_KEY"]
     s_three = await create_client(my_aws_access_key_id, my_aws_secret_access_key)
     yesterday = datetime.today() - timedelta(days=1)
     logging.info("Judgments for Day %s", yesterday.strftime("%B %d %Y"))
@@ -39,7 +39,7 @@ async def main() -> None:
         seed_db_base_tables(judgment_data, conn, mappings)
         updated_mappings = get_base_maps(conn)
         seed_judgment_data(conn, judgment_data, updated_mappings)
-        await upload_multiple_files_to_s3(s_three, "judgments", ENV["AWS_BUCKET"])
+        await upload_multiple_files_to_s3(s_three, "judgments", ENV["BUCKET_NAME"])
         judgment_filepaths = [os.path.join("judgments", file) for
                                 file in os.listdir("judgments")]
         for judgment in judgment_filepaths:
