@@ -4,3 +4,4 @@ python-dotenv
 altair
 pandas
 pytest-mock
+rapidfuzz
