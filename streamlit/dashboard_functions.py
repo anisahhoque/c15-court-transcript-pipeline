@@ -3,6 +3,7 @@ import pandas as pd
 import altair as alt
 from psycopg2 import connect as connection
 import streamlit as st
+from data_source import fetch_case_overview, fetch_parties_involved
 
 def cases_by_court(conn:connection) -> None:
     """Returns cases by court chart diagram."""
@@ -61,3 +62,29 @@ def cases_by_judgment_type(conn:connection) -> None:
 
     # Display chart in Streamlit
     st.altair_chart(chart_judgment_type, use_container_width=True)
+
+
+def display_judgments_for_court(conn: connection) -> None:
+    query = """select * from judgment 
+    join court using (court_id)
+    join judgment_type
+    using (judgment_type_id)
+    join role r on judgment.in_favour_of = r.role_id 
+    """
+
+    
+    with conn.cursor() as cursor:
+        cursor.execute(query)
+        result = cursor.fetchall()
+    df = pd.DataFrame(result)
+
+
+    if not df.empty:
+        selected_court = st.selectbox(
+            "Select a Judgment", df["court_name"])
+
+        if selected_court:
+            col1, col2 = st.columns(2)  # Create two side-by-side columns
+
+
+

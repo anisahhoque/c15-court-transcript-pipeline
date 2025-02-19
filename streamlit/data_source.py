@@ -84,7 +84,6 @@ def get_most_recent_judgment(_conn: connection) -> dict:
 
 
 
-
 def display_judgment(judgment_data:dict) -> None:
     """Displays data onto streamlit from passed dictionary."""
     neutral_citation = judgment_data.get("neutral_citation")
@@ -172,7 +171,6 @@ case_type=None, start_date=None, end_date=None) -> pd.DataFrame:
     
     df = pd.DataFrame(result, columns=columns)
     if search_query:
-        df = df[df['judgment_summary'].apply(match_judgments_by_judgment_search, args=(search_query,))]
         df = df[(df['neutral_citation'].apply(match_judgments_by_citation_search, args=(search_query,)))| (df['judgment_summary'].apply(match_judgments_by_judgment_search, args=(search_query,)))]
     return df
 
@@ -190,8 +188,6 @@ def match_judgments_by_judgment_search(df_value: str,search_query: str) -> bool:
     if all(word.lower() in df_value for word in search_tokens):
         return True
     return False
-
-
 
 
 def display_judgment_search(conn: connection) -> None:
@@ -319,7 +315,7 @@ def fetch_case_overview(conn: connection, neutral_citation: str) -> dict:
         "Summary": result.get('judgment_summary', "N/A"),
         "In Favour Of": result.get('role_name', "N/A")
     }
-    print(case_overview)
+
     return case_overview
 
 def fetch_parties_involved(_conn: connection, neutral_citation: str) -> dict:
