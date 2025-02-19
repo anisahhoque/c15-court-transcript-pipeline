@@ -29,5 +29,6 @@ jobs:
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
 
-    - name: Build, tag, and push latest daily pipeline image to Amazon ECR
-      run: ./deploy-daily-pipeline.sh
+    - name: Build, tag, and push latest server image to Amazon ECR
+      run: ./deploy-server.sh
+
