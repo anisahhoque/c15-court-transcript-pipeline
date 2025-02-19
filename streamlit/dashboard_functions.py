@@ -18,6 +18,7 @@ def cases_by_court(conn:connection) -> None:
 
     # Prepare data for visualization
     df_court_cases = pd.DataFrame(result)
+    df_court_cases["court_name"] = df_court_cases["court_name"].str.title()
 
     # Create chart using Altair
     chart_court_cases = alt.Chart(df_court_cases).mark_bar().encode(
