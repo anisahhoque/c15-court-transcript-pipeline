@@ -166,16 +166,27 @@ case_type=None, start_date=None, end_date=None) -> pd.DataFrame:
     
     df = pd.DataFrame(result, columns=columns)
     if search_query:
-        df = df[(df['neutral_citation'].apply(match_judgments_by_search,args=(search_query,))) | (df['judgment_summary'].apply(match_judgments_by_search,args=(search_query,)))]
+        df = df[df['judgment_summary'].apply(match_judgments_by_judgment_search, args=(search_query,))]
+        df = df[(df['neutral_citation'].apply(match_judgments_by_citation_search, args=(search_query,)))| (df['judgment_summary'].apply(match_judgments_by_judgment_search, args=(search_query,)))]
 
     return df
-
-def match_judgments_by_search(df_value: str,search_query: str) -> bool:
+def match_judgments_by_citation_search(df_value: str,search_query: str) -> bool:
     """Uses fuzzy matching to check if the judgment search input matches the contents of the judgments"""
     neutral_citation_score = fuzz.partial_ratio(search_query.lower(), df_value.lower())
-    judgment_summary_score = fuzz.partial_ratio(search_query.lower(), df_value.lower())
-    if neutral_citation_score > 80 or judgment_summary_score > 20:
+    if neutral_citation_score > 80:
             return True
+    return False
+
+def match_judgments_by_judgment_search(df_value: str,search_query: str) -> bool:
+    """Uses matching to check if the judgment search input matches the contents of the judgments"""
+    search_tokens = search_query.split(' ')
+    df_value = df_value.lower().split(' ')
+    if all(word.lower() in df_value for word in search_tokens):
+        return True
+    return False
+
+
+
 
 def display_judgment_search(conn: connection) -> None:
     """Displays the interface for Judgment Search Page on Streamlit."""
@@ -214,6 +225,7 @@ def display_judgment_search(conn: connection) -> None:
                          type_filter, start_date, end_date)
 
     if not df.empty:
+        
         st.dataframe(df, hide_index=True, use_container_width=True)
 
         selected_citation = st.selectbox(
