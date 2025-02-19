@@ -9,7 +9,7 @@ import pytest
 import requests
 from botocore.exceptions import NoCredentialsError, PartialCredentialsError
 
-from extract import (
+from daily_pipeline.daily_extract import (
     get_judgments_from_atom_feed,
     create_daily_atom_feed_url,
     upload_url_to_s3,
