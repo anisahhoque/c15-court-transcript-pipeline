@@ -230,12 +230,12 @@ def seed_judgment_data(conn: connection, combined_data: list[dict],
             for party in case['parties']:
                 party_name = party.get('party_name', '')
                 party_role = party.get('party_role', '')
-                if len(party_name) <= 100 and len(party_name) == 0 and \
-                    len(party_role) <= 100 or len(party_role) == 0:
+                if len(party_name) <= 100 and len(party_name) != 0 and \
+                    len(party_role) <= 100 and len(party_role) != 0:
                     party_id = party_map[party['party_name'].lower()]
                     for counsel in party['counsels']:
                         counsel_name = counsel.get('counsel_name', '')
-                        if len(counsel_name) <= 100 and len(counsel_name) == 0:
+                        if len(counsel_name) <= 100 and len(counsel_name) != 0:
                             counsel_id = counsel_map[counsel['counsel_name'].lower()]
                             counsel_assignment_table_data.append((party_id, counsel_id))
             with conn.cursor() as cursor:

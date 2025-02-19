@@ -68,6 +68,7 @@ async def download_url(local_folder: str, url: str, file_name: str) -> None:
 
 async def download_days_judgments(day: datetime, folder_path: str) -> None:
     """Handles getting and download judgments for a particular day."""
+    os.makedirs(folder_path, exist_ok=True)
     daily_link = create_daily_atom_feed_url(day)
     daily_judgments = await get_judgments_from_atom_feed(daily_link)
     if daily_judgments:
