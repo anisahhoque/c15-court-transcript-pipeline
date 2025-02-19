@@ -319,7 +319,6 @@ def fetch_parties_involved(_conn: connection, neutral_citation: str) -> dict:
     except Exception as e:
         print(f"Error fetching parties involved: {e}")
     
-    print(parties_involved)
     return parties_involved
 
 
