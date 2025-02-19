@@ -123,7 +123,7 @@ case_type=None, start_date=None, end_date=None) -> pd.DataFrame:
     """Returns filtered judgments from the database."""
     query = """
         SELECT j.neutral_citation, j.judgment_date, 
-               CONCAT(SUBSTRING(j.judgment_summary FROM 1 FOR 20), '...') AS judgment_summary,  -- Truncated summary with "..."
+               j.judgment_summary AS judgment_summary,  -- Truncated summary with "..."
                c.court_name, jt.judgment_type, j.judgment_summary AS full_judgment_summary
         FROM judgment j
         LEFT JOIN court c ON j.court_id = c.court_id
