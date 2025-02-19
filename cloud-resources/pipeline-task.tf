@@ -8,8 +8,8 @@ resource "null_resource" "initialise_pipeline_ecr" {
   provisioner "local-exec" {
     command = <<EOT
       aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin ${local.account_id}.dkr.ecr.eu-west-2.amazonaws.com
-      docker build --platform linux/arm64 --provenance false -t judgment-reader-pipeline .
-      docker tag judgment-reader-pipeline:latest ${aws_ecr_repository.pipeline.repository_url}:latest
+      docker pull hello-world
+      docker tag hello-world ${aws_ecr_repository.pipeline.repository_url}:latest
       docker push ${aws_ecr_repository.pipeline.repository_url}:latest
     EOT
   }
