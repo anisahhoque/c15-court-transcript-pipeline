@@ -98,7 +98,7 @@ def get_case_summary(model: str, client: OpenAI, case: str) -> dict:
 
 
 if __name__=="__main__":
-    api_client = get_client(ENV["OPENAI_KEY"])
+    api_client = get_client(ENV["OPENAI_API_KEY"])
     
     file_names = ['ewhc_comm_2025_240.xml','ukut_iac_2021_202.xml',
                   'ewcop_t3_2025_6.xml', 'ewhc_kb_2025_287.xml',
