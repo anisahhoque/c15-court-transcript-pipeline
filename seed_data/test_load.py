@@ -2,7 +2,7 @@ import psycopg2.extras
 import pytest
 from unittest import mock
 import psycopg2
-from load import get_judgment_type_mapping, get_db_connection, get_court_mapping, get_counsel_mapping, get_chamber_mapping, get_role_mapping, get_base_maps
+from load import get_judgment_type_mapping, get_db_connection, get_court_mapping, get_counsel_mapping, get_chamber_mapping, get_role_mapping,
 
 def test_get_db_connection_successfully():
     mock_conn = mock.MagicMock(spec=psycopg2.extensions.connection)
