@@ -1,5 +1,5 @@
 resource "aws_ecr_repository" "historical_pipeline" {
-  name = "judgment-reader-historical_pipeline"
+  name = "judgment-reader-historical-pipeline"
   image_tag_mutability = "MUTABLE"
   force_delete = true
 }
@@ -23,7 +23,7 @@ locals {
 }
 
 resource "aws_security_group" "historical_pipeline" {
-  name = "judgment-reader-historical_pipeline"
+  name = "judgment-reader-historical-pipeline"
   vpc_id = aws_vpc.main.id
 
   dynamic "ingress" {
@@ -50,7 +50,7 @@ resource "aws_security_group" "historical_pipeline" {
 }
 
 resource "aws_ecs_task_definition" "historical_pipeline" {
-  family = "judgment-reader-historical_pipeline"
+  family = "judgment-reader-historical-pipeline"
   requires_compatibilities = ["FARGATE"]
   network_mode = "awsvpc"
   cpu = 256
@@ -59,7 +59,7 @@ resource "aws_ecs_task_definition" "historical_pipeline" {
   container_definitions = jsonencode(
     [
       {
-        name = "judgment-reader-historical_pipeline"
+        name = "judgment-reader-historical-pipeline"
         image = "${aws_ecr_repository.historical_pipeline.repository_url}:latest"
         cpu = 256 
         memory = 512
