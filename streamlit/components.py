@@ -17,15 +17,14 @@ def homepage_text() -> None:
     )
     st.markdown(
         """
-        <p style="text-align: center;">
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit,
-        sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. 
-        Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris
-        nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor 
-        in reprehenderit in voluptate velit esse cillum dolore eu
-        fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt 
-        in culpa qui officia deserunt mollit anim id est laborum.
-        </p>
+        <p style="text-align: justify">
+       The Court Transcript Pipeline is an automated system designed to enhance
+       the accessibility and analysis of real courtroom documents.
+       Every day, the National Archives releases court transcripts, but they are difficult to search, analyze,
+       and consume for the average person. This project processes these transcripts, extracts key details, and summarizes important information using AI.
+       With a powerful search dashboard, users can explore court judgments, track judicial trends, and uncover
+       insights about courtroom proceedings. Whether you're a journalist,
+       researcher, or citizen, this tool makes legal data more transparent and discoverable.</p>
         """,
         unsafe_allow_html=True
     )
