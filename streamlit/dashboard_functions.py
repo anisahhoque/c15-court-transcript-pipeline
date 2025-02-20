@@ -107,13 +107,14 @@ def display_judgments_for_court(conn: connection) -> None:
         df = df[df["court_name"] == selected_court.title()]
 
      
+        df['in_favour_of'] = df['in_favour_of'].str.title()
         ruling_df = df.groupby('in_favour_of').size().reset_index()
-        ruling_df.columns = ['ruling','count']
+        ruling_df.columns = ['Ruling','Count']
    
    
         chart_ruling_type = alt.Chart(ruling_df).mark_arc().encode(
-            theta=alt.Theta('count', type='quantitative'),
-            color=alt.Color('ruling',type='nominal')
+            theta=alt.Theta('Count', type='quantitative'),
+            color=alt.Color('Ruling',type='nominal')
         ).properties(title="Number of Rulings by Court")
         st.write(f'Number of cases for the selected date range: - {df.shape[0]} cases')
         st.altair_chart(chart_ruling_type, use_container_width=True)

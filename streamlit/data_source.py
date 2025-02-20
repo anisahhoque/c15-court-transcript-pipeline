@@ -68,7 +68,7 @@ def display_as_table(results: list) -> None:
     df.columns = [col.title() for col in df.columns]
 
     df = df.reset_index(drop=True)
-    st.subheader("New Daily Cases")
+    st.subheader("New Daily Cases") 
     st.dataframe(df, hide_index=True, use_container_width=True)
 
 
@@ -120,7 +120,9 @@ def display_judgment(judgment_data:dict) -> None:
 
     if neutral_citation and judgment_summary:
         st.subheader(neutral_citation)
-        st.text(judgment_summary)
+        with st.expander("Read More"):
+            st.text(judgment_summary)
+
         st.text(judgment_date)
     else:
         st.write("No judgment found.")
