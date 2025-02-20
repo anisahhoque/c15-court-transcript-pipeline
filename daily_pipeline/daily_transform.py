@@ -4,8 +4,8 @@ import logging
 
 from openai import OpenAI
 
-from parse_xml import get_metadata
-from prompt_engineering import get_xml_data, get_case_summary
+from daily_parse_xml import get_metadata
+from daily_prompt_engineering import get_xml_data, get_case_summary
 
 def process_all_judgments(folder_path: str, api_client: OpenAI) -> list[dict]:
     """Process judgment data, extracting relevant information and returning a list of dicts."""

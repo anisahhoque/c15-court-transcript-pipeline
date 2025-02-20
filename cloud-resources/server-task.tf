@@ -1,41 +1,6 @@
-locals {
-  server_sg_ports = concat(
-    var.http_ports,
-    [aws_db_instance.main.port]
-  )
-}
-
-resource "aws_security_group" "server" {
-  name = "judgment-reader-server"
-  vpc_id = aws_vpc.main.id
-
-  dynamic "ingress" {
-    for_each = local.server_sg_ports
-
-    content {
-      from_port = ingress.value 
-      to_port = ingress.value 
-      protocol = "tcp"
-      cidr_blocks = ["0.0.0.0/0"]
-    }
-  }
-
-  dynamic "egress" {
-    for_each = local.server_sg_ports
-
-    content {
-      from_port = egress.value 
-      to_port = egress.value
-      protocol = "tcp"
-      cidr_blocks = ["0.0.0.0/0"]
-    }
-  }
-}
-
 resource "aws_ecs_task_definition" "server" {
   family = "judgment-reader-server"
-  requires_compatibilities = ["FARGATE"]
-  network_mode = "awsvpc"
+  network_mode = "host"
   cpu = 256
   memory = 512
   execution_role_arn = "arn:aws:iam::129033205317:role/ecsTaskExecutionRole"
@@ -81,6 +46,15 @@ resource "aws_ecs_task_definition" "server" {
             value = aws_s3_bucket.judgment_xml.id
           }
         ]
+      logConfiguration = {
+          logDriver = "awslogs"
+          options = {
+            awslogs-group = "judgment-reader-server"
+            mode = "non-blocking"
+            awslogs-region = "eu-west-2"
+            awslogs-stream-prefix = "-"
+          }
+        }
       portMappings = [
           {
             containerPort = 80
@@ -98,9 +72,4 @@ resource "aws_ecs_task_definition" "server" {
       }
     ]
   )
-
-  runtime_platform {
-    operating_system_family = "LINUX"
-    cpu_architecture = "X86_64"
-  }
 }

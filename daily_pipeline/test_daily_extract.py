@@ -1,55 +1,25 @@
 from aioresponses import aioresponses
 import aiofiles
 import pytest
-from unittest.mock import patch, AsyncMock, call
-from datetime import datetime
-from extract import (
+from unittest.mock import AsyncMock, call
+from datetime import datetime, timedelta
+from daily_extract import (
     get_judgments_from_atom_feed,
     create_daily_atom_feed_url,
     download_url,
     download_days_judgments,
 )
-def generate_test_cases():
-    base_url = "https://caselaw.nationalarchives.gov.uk/atom.xml?per_page=9999"
-    dates = [
-        datetime(2023, 10, 1),
-        datetime(2020, 1, 15),
-        datetime(2022, 7, 4),
-        datetime(2021, 3, 10),
-        datetime(2024, 2, 29), 
-        datetime(2019, 12, 31),
-        datetime(2018, 1, 1),
-        datetime(2022, 6, 15),
-        datetime(2023, 9, 23),
-        datetime(2025, 5, 19),
-        datetime(2026, 11, 11),
-        datetime(2024, 8, 21),
-        datetime(2030, 7, 17),
-        datetime(2017, 2, 28),
-        datetime(2016, 2, 29),
-        datetime(2021, 6, 30),
-        datetime(2029, 12, 24),
-        datetime(2013, 10, 31),
-        datetime(2001, 5, 25),
-        datetime(1999, 12, 31)
-    ]
+BASE_URL = "https://caselaw.nationalarchives.gov.uk/atom.xml?per_page=9999"
 
-    return [
-        (
-            date,
-            (
-                f"{base_url}&from_date_0={date.day}&from_date_1={date.month}&from_date_2={date.year}"
-                f"&to_date_0={date.day}&to_date_1={date.month}&to_date_2={date.year}"
-            ),
-        )
-        for date in dates
-    ]
-
-@pytest.mark.parametrize("date, expected_url", generate_test_cases())
-def test_create_daily_atom_feed_url(date, expected_url):
-    """Test the creation of the daily atom feed url."""
-    result = create_daily_atom_feed_url(date)
-    assert result == expected_url
+def test_create_daily_atom_feed_url():
+    """Tests that function returns the expected url."""
+    yesterday = datetime.today() - timedelta(days=1)
+    expected_url = (
+        f"{BASE_URL}&from_date_0={yesterday.day}&from_date_1={yesterday.month}"
+        f"&from_date_2={yesterday.year}&to_date_0={yesterday.day}"
+        f"&to_date_1={yesterday.month}&to_date_2={yesterday.year}"
+    )
+    assert create_daily_atom_feed_url() == expected_url
 
 
 @pytest.mark.asyncio
@@ -80,7 +50,6 @@ async def test_get_judgments_from_atom_feed():
 @pytest.mark.asyncio
 async def test_download_url(tmp_path):
     """Test download_url with mocked HTTP response."""
-    # Prepare the mocked HTTP response
     mock_file_content = b"dummy content"
     with aioresponses() as mock_server:
         mock_server.get("<https://fake-url.com/data.xml>", status=200, body=mock_file_content)
@@ -98,9 +67,9 @@ async def test_download_url(tmp_path):
 
 @pytest.mark.asyncio
 async def test_download_days_judgments(mocker):
-    """Test downloading all judgments in a day."""
+    """Test downloading all of yesterday's judgments."""
     mock_get_judgments = mocker.patch(
-        "extract.get_judgments_from_atom_feed",
+        "daily_extract.get_judgments_from_atom_feed",
         new_callable=AsyncMock,
         return_value=[
             {
@@ -114,14 +83,20 @@ async def test_download_days_judgments(mocker):
         ],
     )
 
-    mock_download_url = mocker.patch("extract.download_url", new_callable=AsyncMock)
+    mock_download_url = mocker.patch("daily_extract.download_url", new_callable=AsyncMock)
 
-    date = datetime(2023, 10, 1)
     folder_path = "judgments"
-    await download_days_judgments(date, folder_path)
+    await download_days_judgments(folder_path)
+
+    yesterday = datetime.today() - timedelta(days=1)
+    expected_url = (
+        f"{BASE_URL}&from_date_0={yesterday.day}&from_date_1={yesterday.month}"
+        f"&from_date_2={yesterday.year}&to_date_0={yesterday.day}"
+        f"&to_date_1={yesterday.month}&to_date_2={yesterday.year}"
+    )
 
     mock_get_judgments.assert_called_once_with(
-        "https://caselaw.nationalarchives.gov.uk/atom.xml?per_page=9999&from_date_0=1&from_date_1=10&from_date_2=2023&to_date_0=1&to_date_1=10&to_date_2=2023"
+        expected_url
     )
 
     mock_download_url.assert_has_calls(

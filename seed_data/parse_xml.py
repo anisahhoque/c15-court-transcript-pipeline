@@ -19,16 +19,14 @@ def get_metadata(xml_filename: str) -> dict:
         'judgment_date': ''}
 
     neutral_citation = soup.find('neutralCitation')
-    metadata['neutral_citation'] = neutral_citation.text if soup.find('neutralCitation') and neutral_citation.text else None
+    metadata['neutral_citation'] = neutral_citation.text if \
+        soup.find('neutralCitation') and neutral_citation.text else None
 
     date = soup.find('FRBRdate')
     metadata['judgment_date'] = date.get('date') if date and date.get('date') else None
 
     court_name = soup.find('TLCOrganization')
-    metadata['court_name'] = court_name.get('showAs') if court_name and court_name.get('showAs') else None
+    metadata['court_name'] = court_name.get('showAs') if \
+        court_name and court_name.get('showAs') else None
 
     return metadata
-
-
-
-

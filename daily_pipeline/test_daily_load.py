@@ -7,7 +7,7 @@ import pytest
 from unittest import mock
 from unittest.mock import MagicMock, AsyncMock, ANY
 import psycopg2
-from load import (get_judgment_type_mapping, get_db_connection,
+from daily_load import (get_judgment_type_mapping, get_db_connection,
                   get_court_mapping, get_role_mapping, 
                   upload_file_to_s3, upload_multiple_files_to_s3)
 

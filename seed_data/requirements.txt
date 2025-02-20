@@ -1,9 +1,10 @@
-# Requirements for c15-court-transcript-pipeline
+# Requirements for historical data seeding pipeline
 pytest
 pytest-asyncio
 pylint
 pytest-mock
 pytest-cov
+pytest-asyncio
 requests
 pandas
 python-dotenv
@@ -15,3 +16,5 @@ openai
 beautifulsoup4
 lxml
 aiohttp
+aioresponses
+aiofiles

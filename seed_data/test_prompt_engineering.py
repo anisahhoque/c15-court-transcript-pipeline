@@ -1,3 +1,4 @@
+# pylint:disable=unused-variable
 """Tests for prompts"""
 import json
 from unittest.mock import patch, Mock, mock_open
