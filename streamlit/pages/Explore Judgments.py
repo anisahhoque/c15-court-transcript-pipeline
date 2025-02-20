@@ -4,7 +4,7 @@
 
 from components import dashboard_title  # pylint: disable=import-error
 from data_source import get_db_connection, display_judgment_search  # pylint: disable=import-error
-from dashboard_functions import apply_custom_styles
+from dashboard_functions import adjust_sidebar_width
 
 
 
@@ -12,8 +12,7 @@ from dashboard_functions import apply_custom_styles
 
 def main():
     """This function runs the main block of the webpage."""
-    apply_custom_styles()
-    
+    adjust_sidebar_width()
     dashboard_title()
     conn = get_db_connection()
     display_judgment_search(conn)

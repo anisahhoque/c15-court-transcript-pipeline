@@ -9,12 +9,14 @@ from data_source import (get_most_recent_judgments,
                          get_random_judgment_with_summary_and_date,
                          cases_over_time)
 
-from dashboard_functions import cases_by_court, cases_by_judgment_type, apply_custom_styles
+from dashboard_functions import cases_by_court, cases_by_judgment_type, adjust_sidebar_width
+
 
 def main():
     """Runs the complete scripts."""
+
     st.set_page_config(layout="wide")
-    apply_custom_styles()
+    adjust_sidebar_width()
     load_dotenv()
     dashboard_title()
     homepage_text()
