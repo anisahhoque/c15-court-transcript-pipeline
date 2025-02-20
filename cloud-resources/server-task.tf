@@ -81,6 +81,15 @@ resource "aws_ecs_task_definition" "server" {
             value = aws_s3_bucket.judgment_xml.id
           }
         ]
+      logConfiguration = {
+          logDriver = "awslogs"
+          options = {
+            awslogs-group = "judgment-reader-server"
+            mode = "non-blocking"
+            awslogs-region = "eu-west-2"
+            awslogs-stream-prefix = "-"
+          }
+        }
       portMappings = [
           {
             containerPort = 80

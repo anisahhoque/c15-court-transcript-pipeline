@@ -49,6 +49,10 @@ resource "aws_security_group" "pipeline" {
   }
 }
 
+resource "aws_cloudwatch_log_group" "pipeline" {
+  name = "judgment-reader-pipeline"
+}
+
 resource "aws_ecs_task_definition" "pipeline" {
   family = "judgment-reader-pipeline"
   requires_compatibilities = ["FARGATE"]
@@ -102,6 +106,15 @@ resource "aws_ecs_task_definition" "pipeline" {
             value = var.openai_key
           }
         ]
+      logConfiguration = {
+          logDriver = "awslogs"
+          options = {
+            awslogs-group = "judgment-reader-pipeline"
+            mode = "non-blocking"
+            awslogs-region = "eu-west-2"
+            awslogs-stream-prefix = "-"
+          }
+        }
       portMappings = [
           {
             containerPort = 80
