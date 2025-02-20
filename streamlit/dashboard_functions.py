@@ -235,9 +235,7 @@ def display_number_of_judgments_by_chamber(conn):
 
 def adjust_sidebar_width(width=200):
     """Adjusts the sidebar width in Streamlit and displays a centered image."""
-    image_url = """https://github.com/anisahhoque/
-                    c15-court-transcript-pipeline/
-                    blob/main/dev-resources/s-blob-v1-IMAGE-iD349-cbH2c.png?raw=true"""
+    image_url = """https://github.com/anisahhoque/c15-court-transcript-pipeline/blob/main/dev-resources/s-blob-v1-IMAGE-iD349-cbH2c.png?raw=true"""
 
     # Adjust sidebar width and center the image
     st.markdown(
