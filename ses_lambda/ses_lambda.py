@@ -77,7 +77,7 @@ def get_judgment_html_hyperlinks(judgments: list[str]) -> str:
     """Returns html string containing hyperlinks to previous day's judgments."""
     html_str = ""
     for judgment in judgments:
-        html_content += f"<a href='http://judgment-reader-server-1125183899.eu-west-2.elb.amazonaws.com/Explore_Judgments?selected_citation={judgment}#case-overview'>{judgment}</a><br>"
+        html_str += f"<a href='http://judgment-reader-server-1125183899.eu-west-2.elb.amazonaws.com/Explore_Judgments?selected_citation={judgment}#case-overview'>{judgment}</a><br>"
     return html_str
 
 
