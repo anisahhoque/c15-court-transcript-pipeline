@@ -88,8 +88,15 @@ async def test_download_days_judgments(mocker):
     folder_path = "judgments"
     await download_days_judgments(folder_path)
 
+    yesterday = datetime.today() - timedelta(days=1)
+    expected_url = (
+        f"{BASE_URL}&from_date_0={yesterday.day}&from_date_1={yesterday.month}"
+        f"&from_date_2={yesterday.year}&to_date_0={yesterday.day}"
+        f"&to_date_1={yesterday.month}&to_date_2={yesterday.year}"
+    )
+
     mock_get_judgments.assert_called_once_with(
-        "https://caselaw.nationalarchives.gov.uk/atom.xml?per_page=9999&from_date_0=18&from_date_1=2&from_date_2=2025&to_date_0=18&to_date_1=2&to_date_2=2025"
+        expected_url
     )
 
     mock_download_url.assert_has_calls(
