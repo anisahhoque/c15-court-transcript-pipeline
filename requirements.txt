@@ -18,3 +18,4 @@ streamlit
 aiohttp
 aioresponses
 aiofiles
+rapidfuzz

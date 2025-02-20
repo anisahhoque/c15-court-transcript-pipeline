@@ -1,5 +1,6 @@
 # Requirements for historical data seeding pipeline
 pytest
+pytest-asyncio
 pylint
 pytest-mock
 pytest-cov

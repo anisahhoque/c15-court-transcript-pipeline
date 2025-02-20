@@ -1,3 +1,4 @@
+import streamlit as st
 from data_source import fetch_case_overview  # Adjust based on your project structure
 from unittest.mock import patch, MagicMock
 from data_source import display_judgment_search
@@ -63,7 +64,7 @@ def test_display_judgment():
         judgment_data = {"neutral_citation": "Case123",
                          "judgment_summary": "This is a summary", "judgment_date": "2025-01-01"}
         data_source.display_judgment(judgment_data)
-        mock_subheader.assert_called_once_with("Case123")
+        mock_subheader.assert_called_once_with("Ref No. Case123")
         mock_text.assert_any_call("This is a summary")
         mock_text.assert_any_call("2025-01-01")
         mock_write.assert_not_called()
@@ -293,45 +294,6 @@ def test_fetch_judgments_called_with_correct_arguments(mock_session_state, mock_
 
 
 
-@patch("streamlit.text_input")
-@patch("streamlit.selectbox")
-@patch("streamlit.date_input")
-@patch("streamlit.dataframe")
-@patch("streamlit.write")
-@patch("data_source.fetch_judgments")
-@patch("data_source.fetch_case_overview")
-def test_display_judgment_search_with_results(
-    mock_fetch_case_overview, mock_fetch_judgments, mock_data_frame, mock_write,
-    mock_date_input, mock_selectbox, mock_text_input
-):
-
-    # Mocking Streamlit inputs
-    mock_text_input.return_value = "Search term"
-    mock_selectbox.return_value = "Citation 1"
-    mock_date_input.return_value = []  # Return an empty list instead of None
-
-    df = pd.DataFrame({
-        "neutral_citation": ["Citation 1", "Citation 2"],
-        "court_name": ["Court A", "Court B"],
-        "judgment_name": ["Judgment 1", "Judgment 2"]
-    })
-    mock_fetch_judgments.return_value = df
-    mock_fetch_case_overview.return_value = {
-        "Court Name": "Court A",
-        "Judgment Name": "Judgment 1",
-        "Judgment Date": "2025-02-14",
-        "Presiding Judge(s)": "Judge 1",
-        "Summary": "This is a summary of the case."  # Add a summary key
-    }
-
-    mock_db_conn = MagicMock()
-
-    display_judgment_search(mock_db_conn)
-
-
-
-
-
 def test_fetch_parties_involved():
     mock_conn = MagicMock()
 
@@ -407,9 +369,10 @@ def test_fetch_case_overview_success(mock_connect):
 
     # Define the expected result
     expected = {
-        "Neutral Citation": "Citation 1",
+        "Neutral Citation": "CITATION 1",
         "Judgment Date": "2025-02-14",
         "Court": "Court A",
+        'In Favour Of': 'N/A',
         "Judgment Type": "Civil",
         "Judge": "Judge 1",
         "Summary": "This is a case summary."

@@ -1,13 +1,27 @@
+from unittest.mock import patch
+import components  # Ensure your `components.py` is correctly imported
+import re
+import components  # Ensure this imports your components module
 import pytest
 from unittest.mock import patch, call
 import components
 
 
 def test_dashboard_title():
-    """Test if dashboard_title calls st.title with the correct argument."""
-    with patch("streamlit.title") as mock_title:
+    """Test if dashboard_title calls st.markdown with the correct argument."""
+    with patch("streamlit.markdown") as mock_markdown:
         components.dashboard_title()
-        mock_title.assert_called_once_with("Judgment Reader")
+        # Normalize whitespace before comparison
+        args, kwargs = mock_markdown.call_args
+        assert args[0].strip() == """
+        <h1 style="text-align: center;">Judgment Reader</h1>
+        """.strip()
+        assert kwargs["unsafe_allow_html"] is True
+
+
+def normalize_whitespace(text):
+    """Remove excessive whitespace and normalize indentation."""
+    return re.sub(r'\s+', ' ', text.strip())
 
 
 def test_homepage_text():
@@ -15,17 +29,18 @@ def test_homepage_text():
     with patch("streamlit.markdown") as mock_markdown:
         components.homepage_text()
 
-        # Ensure two markdown calls were made
-        assert mock_markdown.call_count == 2
+        # Ensure one markdown call was made
+        assert mock_markdown.call_count == 1
 
-        # Expected calls (ignore whitespace issues)
-        expected_calls = [
-            call("<h2 style=\"text-align: center;\">Home</h2>",
-                 unsafe_allow_html=True),
-            # Just checking it was called
-            call("<p style=\"text-align: center;\">", unsafe_allow_html=True)
-        ]
+        # Extract actual call arguments
+        actual_call = mock_markdown.call_args[0][0]  # Extract first argument
 
-        for expected in expected_calls:
-            assert any(expected[0] in call[0][0]
-                       for call in mock_markdown.call_args_list)
+        # Expected HTML (normalized)
+        expected_html = """
+            <p style="text-align: center">
+            Welcome to the Court Transcript Pipeline.</p>
+        """
+
+        # Compare normalized versions
+        assert normalize_whitespace(
+            actual_call) == normalize_whitespace(expected_html)
