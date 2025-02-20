@@ -5,17 +5,30 @@ on:
   push:
     branches: [ main ]
 
+  workflow_run:
+    workflows: 
+      - "Python Code Quality Check"
+      - "Run Pytest with Coverage Check"
+    types:
+      - completed
+
 jobs:
   
-  build:
-    
-    name: Build Image
-    needs: 
-      - Python Code Quality Check
-      - Run Pytest with Coverage Check
+  workflow-run-check:
+    name: Check Workflow Run Event
     runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success'
+    
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
 
-   
+  build:
+    name: Build Image
+    needs: workflow-run-check  
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.event.ref == 'refs/heads/main'  
+
     steps:
 
     - name: Check out code
@@ -35,7 +48,7 @@ jobs:
     - name: Build, tag, and push latest server image to Amazon ECR
       run: |
         aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-west-2.amazonaws.com
-        docker build --platform linux/arm64 --provenance false -t judgment-reader-server streamlit/.
+        docker build --platform linux/amd64 --provenance false -t judgment-reader-server streamlit/.
         docker tag judgment-reader-server ${{ secrets.SERVER_ECR_URL }}:latest
         docker push ${{ secrets.SERVER_ECR_URL }}:latest
         aws ecs update-service --region eu-west-2 --cluster judgment-reader --service judgment-reader-server --task-definition judgment-reader-server:latest --force-new-deployment
