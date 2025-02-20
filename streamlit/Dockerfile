@@ -3,7 +3,7 @@ FROM python:latest
 RUN mkdir streamlit
 RUN mkdir streamlit/pages
 
-WORKDIR ~/streamlit
+WORKDIR /streamlit
 
 COPY Home.py .
 COPY components.py .
