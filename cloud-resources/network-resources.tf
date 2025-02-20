@@ -107,7 +107,7 @@ resource "aws_vpc_endpoint_policy" "s3" {
     Statement = [
       {
         Action = [
-          "s3:GetObject"
+          "s3:*"
         ]
         Effect = "Allow"
         Resource = [
