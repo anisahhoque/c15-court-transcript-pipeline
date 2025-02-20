@@ -1,4 +1,4 @@
-FROM --platform=linux/amd64 python:latest AS build
+FROM python:latest
 
 ENV DAYS_TO_SEED=30
 
