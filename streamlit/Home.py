@@ -44,14 +44,5 @@ def main():
     results = get_most_recent_judgments(conn)
     display_as_table(results)
 
-
-    
-
-
-        
-
-
-
-
 if __name__ == "__main__":
     main()
