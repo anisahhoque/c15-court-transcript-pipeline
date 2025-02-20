@@ -5,7 +5,7 @@ from psycopg2 import connect as connection
 import streamlit as st
 
 
-def cases_by_court(conn:connection) -> None:
+def cases_by_court(conn: connection) -> None:
     """Returns cases by court chart diagram."""
     query = """SELECT court_name as "Court", COUNT(*) AS "Case Count"
     FROM judgment
@@ -21,14 +21,14 @@ def cases_by_court(conn:connection) -> None:
         result = cursor.fetchall()
 
     # Prepare data for visualization
-    df_court_cases = pd.DataFrame(result)
+    df_court_cases = pd.DataFrame(result, columns=["Court", "Case Count"])
     df_court_cases["Court"] = df_court_cases["Court"].str.title()
 
     # Create chart using Altair
     chart_court_cases = alt.Chart(df_court_cases).mark_bar().encode(
         x=alt.X('Court', title="Court Name", sort="-y"),
         y=alt.Y('Case Count', title="No. of Total Judgments"),
-        color=alt.Color('Court', title = "Courts"),
+        color=alt.Color('Court', title="Courts"),
         tooltip=['Court', 'Case Count']
     ).properties(title="Number of Judgments by Court")
 
@@ -36,7 +36,7 @@ def cases_by_court(conn:connection) -> None:
     st.altair_chart(chart_court_cases, use_container_width=True)
 
 
-def cases_by_judgment_type(conn:connection) -> None:
+def cases_by_judgment_type(conn: connection) -> None:
     """Displays cases by judgment type in a pie chart on streamlit."""
     query = """SELECT judgment_type as "Judgment Type", COUNT(*) AS "Case Count"
     FROM judgment
@@ -50,7 +50,8 @@ def cases_by_judgment_type(conn:connection) -> None:
         result = cursor.fetchall()
 
     # Prepare data for visualization
-    df_judgment_type = pd.DataFrame(result)
+    df_judgment_type = pd.DataFrame(
+        result, columns=["Judgment Type", "Case Count"])
     df_judgment_type["Judgment Type"] = df_judgment_type["Judgment Type"].str.title()
 
     # Create chart using Altair
@@ -59,7 +60,6 @@ def cases_by_judgment_type(conn:connection) -> None:
         color=alt.Color('Judgment Type', title="Types"),
         tooltip=['Judgment Type', 'Case Count']
     ).properties(title="Number of Judgments by Judgment Type")
-
 
     st.altair_chart(chart_judgment_type, use_container_width=True)
 
