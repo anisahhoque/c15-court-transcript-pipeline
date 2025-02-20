@@ -19,7 +19,8 @@ from load import (get_db_connection, get_base_maps,
 
 def list_days_between(start_date: datetime, end_date: datetime):
     """Returns a list of dates between two given dates (inclusive)."""
-    return [start_date + timedelta(days=i) for i in range((end_date - start_date).days + 1)]
+    return [start_date + timedelta(days=i)
+            for i in range((end_date - start_date).days + 1)]
 
 
 async def main() -> None:
@@ -27,20 +28,21 @@ async def main() -> None:
     load_dotenv()
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
-    api_client = get_client(ENV["OPENAPI_KEY"])
+    api_client = get_client(ENV["OPENAI_KEY"])
     conn = get_db_connection(dbname=ENV['DB_NAME'], user=ENV['DB_USER'],
                              password=ENV['DB_PASSWORD'], host=ENV['DB_HOST'],
                              port=ENV['DB_PORT'])
     my_aws_access_key_id = ENV["ACCESS_KEY"]
     my_aws_secret_access_key = ENV["SECRET_KEY"]
-    s_three = await create_client(my_aws_access_key_id, my_aws_secret_access_key)
+    s_three = await create_client(my_aws_access_key_id,
+                                  my_aws_secret_access_key)
     end_date = datetime.today() - timedelta(days=1)
     start_date = end_date - (timedelta(days=int(ENV["DAYS_TO_SEED"]) - 1))
     with conn.cursor() as cursor:
-            with open("schema.sql", "r", encoding="utf-8") as f:
-                sql_commands = f.read()
-                cursor.execute(sql_commands)
-                conn.commit()
+        with open("schema.sql", "r", encoding="utf-8") as f:
+            sql_commands = f.read()
+            cursor.execute(sql_commands)
+            conn.commit()
     for day in list_days_between(start_date, end_date):
         logging.info("Judgments for Day %s", day.strftime("%B %d %Y"))
         logging.info("------------------")
@@ -51,7 +53,9 @@ async def main() -> None:
             seed_db_base_tables(judgment_data, conn, mappings)
             updated_mappings = get_base_maps(conn)
             seed_judgment_data(conn, judgment_data, updated_mappings)
-            await upload_multiple_files_to_s3(s_three, "judgments", ENV["BUCKET_NAME"])
+            await upload_multiple_files_to_s3(s_three,
+                                              "judgments",
+                                              ENV["BUCKET_NAME"])
             judgment_filepaths = [os.path.join("judgments", file) for
                                   file in os.listdir("judgments")]
             for judgment in judgment_filepaths:
