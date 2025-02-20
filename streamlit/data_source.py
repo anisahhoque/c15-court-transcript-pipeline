@@ -12,11 +12,11 @@ import streamlit as st
 def get_db_connection() -> connection:
     """Returns a live connection to PostgreSQL database with RealDictCursor as default."""
     config = {
-        "dbname": ENV.get("DB_NAME"),
-        "user": ENV.get("DB_USER"),
-        "password": ENV.get("DB_PASSWORD"),
-        "host": ENV.get("DB_HOST"),
-        "port": ENV.get("DB_PORT"),
+        "dbname": ENV.get("TEST_DB_NAME"),
+        "user": ENV.get("TEST_DB_USER"),
+        "password": ENV.get("TEST_DB_PASSWORD"),
+        "host": ENV.get("TEST_DB_HOST"),
+        "port": ENV.get("TEST_DB_PORT"),
     }
 
     return connect(cursor_factory=RealDictCursor, **config)
@@ -282,8 +282,14 @@ def display_judgment_search(conn: connection) -> None:
     if not df.empty:
         display_as_table_search(df)
 
+        query_params = st.query_params
+        selected_citation_from_url = query_params.get("selected_citation", [None])
+
         selected_citation = st.selectbox(
-            "Select a Judgment", df["neutral_citation"])
+            "Select a Judgment",
+            df["neutral_citation"], 
+            index=df["neutral_citation"].tolist().index(selected_citation_from_url) if selected_citation_from_url in df["neutral_citation"].values else 0
+        )
 
         if selected_citation:
             col1, col2 = st.columns(2)  # Create two side-by-side columns
