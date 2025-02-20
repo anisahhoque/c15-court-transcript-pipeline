@@ -245,7 +245,7 @@ def display_judgment_search(conn: connection) -> None:
 
     if court_filter != "All":
         court_filter = court_filter.lower()
-    
+
     col1, col2 = st.columns(2)
 
     with col1:
@@ -406,12 +406,11 @@ def fetch_parties_involved(_conn: connection, neutral_citation: str) -> dict:
                 if role not in parties_involved:
                     parties_involved[role] = []
                 parties_involved[role].append(party)
-  
+
 
 
     except Exception as e:
         print(f"Error fetching parties involved: {e}")
-    
-    return parties_involved
 
+    return parties_involved
 
