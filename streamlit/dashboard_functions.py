@@ -61,16 +61,18 @@ def cases_by_judgment_type(conn:connection) -> None:
         tooltip=['Judgment Type', 'Case Count']
     ).properties(title="Number of Judgments by Judgment Type")
 
-    # Display chart in Streamlit
+
     st.altair_chart(chart_judgment_type, use_container_width=True)
 
 
+
 def display_judgments_for_court(conn: connection) -> None:
-    query = """select * from judgment 
+    query = """select judgment_date,judgment_summary,neutral_citation,judge_name,court_name,judgment_type, role_name as in_favour_of from judgment 
     join court using (court_id)
     join judgment_type
     using (judgment_type_id)
     join role r on judgment.in_favour_of = r.role_id 
+    
     """
 
     
@@ -80,12 +82,46 @@ def display_judgments_for_court(conn: connection) -> None:
     df = pd.DataFrame(result)
 
 
-    if not df.empty:
-        selected_court = st.selectbox(
-            "Select a Judgment", df["court_name"])
 
-        if selected_court:
-            col1, col2 = st.columns(2)  # Create two side-by-side columns
+    if not df.empty:
+        df['court_name'] = df['court_name'].str.title()
+        df['judgment_date'] = pd.to_datetime(df['judgment_date'])
+        min_date = df['judgment_date'].min().date()  
+        max_date = df['judgment_date'].max().date()   
+        selected_court = st.selectbox(
+            "Select a Court", df["court_name"].unique())
+        date_range = st.date_input("Select Date Range", 
+                        value=[min_date, max_date],
+                        min_value=min_date,
+                        max_value=max_date,   
+                        key="date_range")
+
+
+        if len(date_range) == 2:
+            start_date, end_date = date_range
+            start_date = pd.to_datetime(start_date)  # Convert to datetime if it's a date or string
+            end_date = pd.to_datetime(end_date)  
+            df = df[(df['judgment_date'] >= start_date) & (df['judgment_date'] <= end_date)]
+        else:
+            start_date, end_date = None, None
+        df = df[df["court_name"] == selected_court.title()]
+
+     
+        ruling_df = df.groupby('in_favour_of').size().reset_index()
+        ruling_df.columns = ['ruling','count']
+   
+   
+        chart_ruling_type = alt.Chart(ruling_df).mark_arc().encode(
+            theta=alt.Theta('count', type='quantitative'),
+            color=alt.Color('ruling',type='nominal')
+        ).properties(title="Number of Rulings by Court")
+
+       
+        st.altair_chart(chart_ruling_type, use_container_width=True)
+
+        st.write(f'Number of cases for the date range: {start_date.date()} - {end_date.date()} - {df.shape[0]} cases')
+    else:
+        st.write("No results found for your search.")
 
 
 def display_judgments_by_judge(conn):
@@ -120,9 +156,9 @@ def display_judgments_by_judge(conn):
     num_judges = st.slider(
         "Select number of judges to display:",
         min_value=5,
-        max_value= 20,
+        max_value=20,
         value=5,
-        step = 5  # Default to 10 or the max available
+        step=5  # Default to 10 or the max available
     )
 
     # Filter dataframe based on user selection
@@ -183,7 +219,7 @@ def display_number_of_judgments_by_chamber(conn):
         min_value=2,
         max_value=10,
         value=2,
-        step=2 # Allows selecting any value between 2 and 10
+        step=2  # Allows selecting any value between 2 and 10
     )
 
     # Limit data to the selected number of chambers
