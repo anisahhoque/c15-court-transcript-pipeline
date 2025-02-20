@@ -5,6 +5,7 @@ from psycopg2 import connect as connection
 import streamlit as st
 from data_source import fetch_case_overview, fetch_parties_involved
 
+
 def cases_by_court(conn:connection) -> None:
     """Returns cases by court chart diagram."""
     query = """SELECT court_name as "Court", COUNT(*) AS "Case Count"
@@ -121,3 +122,120 @@ def display_judgments_for_court(conn: connection) -> None:
         st.write(f'Number of cases for the date range: {start_date.date()} - {end_date.date()} - {df.shape[0]} cases')
     else:
         st.write("No results found for your search.")
+            "Select a Judgment", df["court_name"])
+
+        if selected_court:
+            col1, col2 = st.columns(2)  # Create two side-by-side columns
+
+
+def display_judgments_by_judge(conn):
+    """Displays a dynamic bar chart of judgments by judge with user-selected limit."""
+
+    # Query to get the count of judgments per judge
+    query = """SELECT judge_name AS "Judge", COUNT(*) AS "Total Judgments"
+               FROM judgment
+               GROUP BY judge_name
+               ORDER BY COUNT(*) DESC;
+            """
+
+    with conn.cursor() as cursor:
+        cursor.execute(query)
+        result = cursor.fetchall()
+
+    # Convert query result to DataFrame
+    df = pd.DataFrame(result, columns=["Judge", "Total Judgments"])
+
+    # Ensure there's data before proceeding
+    if df.empty:
+        st.warning("No data available for judgments by judge.")
+        return
+
+    # Apply title case to judge names
+    df["Judge"] = df["Judge"].str.title()
+
+    # Get total number of judges available
+    total_judges = len(df)
+
+    # Streamlit slider for user to select the number of judges to display
+    num_judges = st.slider(
+        "Select number of judges to display:",
+        min_value=5,
+        max_value= 20,
+        value=5,
+        step = 5  # Default to 10 or the max available
+    )
+
+    # Filter dataframe based on user selection
+    df = df.head(num_judges)
+
+    # Create Altair bar chart
+    chart = alt.Chart(df).mark_bar().encode(
+        # Sort bars by descending value
+        x=alt.X('Judge', title="Judge", sort="-y"),
+        y=alt.Y('Total Judgments', title="No. of Total Judgments"),
+        color=alt.Color('Judge', title="Judge"),
+        tooltip=['Judge', 'Total Judgments']
+    ).properties(title=f"Judgments by Judge (Top {num_judges})")
+
+    # Display chart in Streamlit
+    st.altair_chart(chart, use_container_width=True)
+
+
+def display_number_of_judgments_by_chamber(conn):
+    query = """SELECT chamber.chamber_name AS "Chamber", COUNT(*) AS "Total Judgments"
+               FROM chamber
+               JOIN counsel ON chamber.chamber_id = counsel.chamber_id
+               JOIN counsel_assignment ON counsel.counsel_id = counsel_assignment.counsel_id
+               JOIN party ON counsel_assignment.party_id = party.party_id
+               JOIN judgment ON party.neutral_citation = judgment.neutral_citation
+               GROUP BY chamber.chamber_name
+               ORDER BY "Total Judgments" DESC;
+            """
+
+    with conn.cursor() as cursor:
+        cursor.execute(query)
+        result = cursor.fetchall()
+
+    # Convert result into DataFrame
+    df_chamber_judgments = pd.DataFrame(
+        result, columns=["Chamber", "Total Judgments"])
+
+    # Drop rows where values are 'None', 'Not Specified', NaN, empty string, or 0
+    df_chamber_judgments = df_chamber_judgments[
+        df_chamber_judgments["Chamber"].notna() &
+        (df_chamber_judgments["Chamber"] != '') &
+        (df_chamber_judgments["Chamber"].str.lower() != 'none') &
+        (df_chamber_judgments["Chamber"].str.lower() != 'not specified') &
+        (df_chamber_judgments["Total Judgments"].notna()) &
+        (df_chamber_judgments["Total Judgments"] != 0)
+    ]
+
+    df_chamber_judgments["Chamber"] = df_chamber_judgments["Chamber"].str.title()
+
+    # Ensure there is data before plotting
+    if df_chamber_judgments.empty:
+        st.warning("No valid data available for judgments by chamber.")
+        return
+
+    # Get the number of chambers to display from the user
+    num_chambers = st.slider(
+        "Select number of chambers to display:",
+        min_value=2,
+        max_value=10,
+        value=2,
+        step=2 # Allows selecting any value between 2 and 10
+    )
+
+    # Limit data to the selected number of chambers
+    df_chamber_judgments_limited = df_chamber_judgments.head(num_chambers)
+
+    # Create a bar chart with Altair
+    chart = alt.Chart(df_chamber_judgments_limited).mark_bar().encode(
+        x=alt.X('Chamber:N', title="Chamber", sort='-y'),
+        y=alt.Y('Total Judgments:Q', title="No. of Total Judgments"),
+        color=alt.Color('Chamber:N', title="Chamber"),
+        tooltip=['Chamber', 'Total Judgments']
+    ).properties(title=f"Top {num_chambers} Judgments by Chamber")
+
+    # Display chart in Streamlit
+    st.altair_chart(chart, use_container_width=True)
