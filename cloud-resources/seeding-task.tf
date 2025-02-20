@@ -15,6 +15,10 @@ resource "null_resource" "initialise_historical_pipeline_ecr" {
   }
 }
 
+resource "aws_cloudwatch_log_group" "historical_pipeline" {
+  name = "judgment-reader-historical-pipeline"
+}
+
 locals {
   historical_pipeline_sg_ports = concat(
     var.http_ports,
@@ -102,6 +106,15 @@ resource "aws_ecs_task_definition" "historical_pipeline" {
             value = var.openai_key
           }
         ]
+      logConfiguration = {
+          logDriver = "awslogs"
+          options = {
+            awslogs-group = "judgment-reader-historical-pipeline"
+            mode = "non-blocking"
+            awslogs-region = "eu-west-2"
+            awslogs-stream-prefix = "-"
+          }
+        }
       portMappings = [
           {
             containerPort = 80

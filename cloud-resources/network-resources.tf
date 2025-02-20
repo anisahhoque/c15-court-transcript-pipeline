@@ -1,5 +1,6 @@
 resource "aws_vpc" "main" {
   cidr_block = "10.0.0.0/16"
+  enable_dns_hostnames = true
 
   tags = {
     Name = "judgment-reader"
@@ -110,8 +111,7 @@ resource "aws_vpc_endpoint_policy" "s3" {
         ]
         Effect = "Allow"
         Resource = [
-          aws_s3_bucket.judgment_xml.arn,
-          "${aws_s3_bucket.judgment_xml.arn}/*"
+          "*"
         ]
         Principal = "*"
       }
