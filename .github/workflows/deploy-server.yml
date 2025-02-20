@@ -1,35 +1,20 @@
 name: Deploy server
 
-
 on:
+ 
   push:
     branches: [ main ]
-  
-  workflow_run:
-    workflows: 
-      - "Python Code Quality Check"
-      - "Run Pytest with Coverage Check"
-    types:
-      - completed
 
 jobs:
   
-  workflow-run-check:
-    name: Check Workflow Run Event
-    runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success'
-    
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v2
-
   build:
+    
     name: Build Image
-    needs: workflow-run-check  
     runs-on: ubuntu-latest
-    if: needs.workflow-run-check.result == 'success'
+
    
     steps:
+
     - name: Check out code
       uses: actions/checkout@v2
     
