@@ -5,7 +5,8 @@ import streamlit as st
 
 from streamlit.subscribe_functions import is_valid_email, create_client, create_contact
 
-if __name__ == "__main__":
+def main():
+    """Main function to run subscribe page."""
     email_input = st.text_input("Enter your email here: ")
     if st.button("Subscribe to daily judgment emails"):
         if is_valid_email(email_input.strip()):
@@ -13,3 +14,7 @@ if __name__ == "__main__":
                 create_contact(ses_client, ENV["CONTACT_LIST_NAME"], email_input.strip())
         else:
             st.error("Please ensure your email is valid.")
+
+
+if __name__ == "__main__":
+    main()
