@@ -36,6 +36,11 @@ async def main() -> None:
     s_three = await create_client(my_aws_access_key_id, my_aws_secret_access_key)
     end_date = datetime.today() - timedelta(days=1)
     start_date = end_date - (timedelta(days=int(ENV["DAYS_TO_SEED"]) - 1))
+    with conn.cursor() as cursor:
+            with open("schema.sql", "r", encoding="utf-8") as f:
+                sql_commands = f.read()
+                cursor.execute(sql_commands)
+                conn.commit()
     for day in list_days_between(start_date, end_date):
         logging.info("Judgments for Day %s", day.strftime("%B %d %Y"))
         logging.info("------------------")

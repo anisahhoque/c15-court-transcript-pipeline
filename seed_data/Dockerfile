@@ -11,6 +11,7 @@ COPY parse_xml.py .
 COPY prompt_engineering.py .
 COPY transform.py .
 COPY load.py .
+COPY schema.sql . 
 COPY initial_seeding.py .
 
 CMD [ "python", "initial_seeding.py"]
