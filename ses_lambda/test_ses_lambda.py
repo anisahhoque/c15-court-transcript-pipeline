@@ -70,7 +70,7 @@ class TestSesLambda(unittest.TestCase):
             response = handler({}, {})
 
         self.assertEqual(response["StatusCode"], 200)
-        self.assertIn("JUDGMENT001", response["Body"])
+        self.assertIn("JUDGMENT001", response["JudgmentData"])
         self.assertIn("email@example.com", response["SubscribedEmails"])
         mock_create_client.assert_called_once()
         mock_get_db_connection.assert_called_once()
