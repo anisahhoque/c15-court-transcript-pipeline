@@ -122,11 +122,6 @@ def display_judgments_for_court(conn: connection) -> None:
         st.write(f'Number of cases for the date range: {start_date.date()} - {end_date.date()} - {df.shape[0]} cases')
     else:
         st.write("No results found for your search.")
-            "Select a Judgment", df["court_name"])
-
-        if selected_court:
-            col1, col2 = st.columns(2)  # Create two side-by-side columns
-
 
 def display_judgments_by_judge(conn):
     """Displays a dynamic bar chart of judgments by judge with user-selected limit."""
@@ -160,9 +155,9 @@ def display_judgments_by_judge(conn):
     num_judges = st.slider(
         "Select number of judges to display:",
         min_value=5,
-        max_value= 20,
+        max_value=20,
         value=5,
-        step = 5  # Default to 10 or the max available
+        step=5  # Default to 10 or the max available
     )
 
     # Filter dataframe based on user selection
@@ -223,7 +218,7 @@ def display_number_of_judgments_by_chamber(conn):
         min_value=2,
         max_value=10,
         value=2,
-        step=2 # Allows selecting any value between 2 and 10
+        step=2  # Allows selecting any value between 2 and 10
     )
 
     # Limit data to the selected number of chambers
@@ -239,3 +234,4 @@ def display_number_of_judgments_by_chamber(conn):
 
     # Display chart in Streamlit
     st.altair_chart(chart, use_container_width=True)
+
