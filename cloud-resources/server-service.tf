@@ -56,7 +56,7 @@ resource "aws_alb_listener" "server" {
 
 resource "aws_alb_target_group" "server" {
   name = "judment-reader-server-service"
-  target_type = "ip"
+  target_type = "instance"
   port = 80
   protocol = "HTTP"
   vpc_id = aws_vpc.main.id
@@ -65,18 +65,10 @@ resource "aws_alb_target_group" "server" {
 resource "aws_ecs_service" "server" {
   name = "judgment-reader-server"
   cluster = aws_ecs_cluster.main.id
+  launch_type = "EC2"
   task_definition = aws_ecs_task_definition.server.id 
   force_delete = true 
-  launch_type = "FARGATE"
   desired_count = 1 
-  network_configuration {
-    subnets = [
-      aws_subnet.public_a.id,
-      aws_subnet.public_b.id
-    ]
-    security_groups = [aws_security_group.server.id]
-    assign_public_ip = true
-  }
   load_balancer {
     target_group_arn = aws_alb_target_group.server.arn 
     container_name = "judgment-reader-server"
