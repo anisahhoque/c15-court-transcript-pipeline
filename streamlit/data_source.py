@@ -7,7 +7,7 @@ from psycopg2.extras import RealDictCursor
 from psycopg2.extensions import connection
 import pandas as pd
 import streamlit as st
-from datetime import datetime
+import altair as alt
 
 
 
@@ -69,7 +69,7 @@ def display_as_table(results: list) -> None:
 
     df = df.reset_index(drop=True)
     st.subheader("New Daily Cases") 
-    st.dataframe(df, hide_index=True, use_container_width=True)
+    st.dataframe(df, hide_index=True, use_container_width=True, height=200)
 
 
 def display_as_table_search(results: list) -> None:
@@ -89,7 +89,7 @@ def display_as_table_search(results: list) -> None:
 
     df = df.reset_index(drop=True)
     st.subheader("Judgments")
-    st.dataframe(df, hide_index=True, use_container_width=True)
+    st.dataframe(df, hide_index=True, use_container_width=True, height=200)
 
 @st.cache_resource
 def get_most_recent_judgment(_conn: connection) -> dict:
@@ -120,13 +120,34 @@ def display_judgment(judgment_data:dict) -> None:
 
     if neutral_citation and judgment_summary:
         st.subheader(neutral_citation)
+        
+
         with st.expander("Read More"):
-            st.text(judgment_summary)
+                st.text(judgment_summary)
 
         st.text(judgment_date)
     else:
         st.write("No judgment found.")
 
+def cases_over_time(conn: connection):
+    query = """SELECT judgment_date, judgment_type, COUNT(*) AS judgment_count
+                FROM judgment
+                JOIN judgment_type USING (judgment_type_id)
+                GROUP BY judgment_date, judgment_type
+                ORDER BY judgment_date
+                """
+    with conn.cursor() as cursor:
+        cursor.execute(query)
+        df = pd.DataFrame(cursor.fetchall())
+
+    chart = alt.Chart(df).mark_line().encode(
+        x='judgment_date:T',  # Use timestamp for x-axis
+        y='judgment_count:Q',  # Numeric value for y-axis (count of judgments)
+        color='judgment_type:N'  # Color the lines based on judgment_type
+    ).properties(
+        title="Judgment Types Over Time"
+    )
+    st.altair_chart(chart)
 
 @st.cache_resource(ttl=86400)
 def get_random_judgment_with_summary_and_date(_conn: connection) -> dict:
@@ -225,7 +246,7 @@ def display_judgment_search(conn: connection) -> None:
 
     search_query = st.text_input("🔍 Search a Judgment", "")
 
-    col1, col2, col3 = st.columns([1, 1, 2])
+    col1, col2, col3 = st.columns([2, 1, 1])
 
     with col1:
         # Fetch courts dynamically from the database
@@ -402,6 +423,5 @@ def fetch_parties_involved(_conn: connection, neutral_citation: str) -> dict:
         print(f"Error fetching parties involved: {e}")
     
     return parties_involved
-
 
 

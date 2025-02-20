@@ -116,7 +116,7 @@ def display_judgments_for_court(conn: connection) -> None:
             theta=alt.Theta('Count', type='quantitative'),
             color=alt.Color('Ruling',type='nominal')
         ).properties(title="Number of Rulings by Court")
-        st.write(f'Number of cases for the selected date range: - {df.shape[0]} cases')
+        st.write(f'Cases found: {df.shape[0]}')
         st.altair_chart(chart_ruling_type, use_container_width=True)
 
         
