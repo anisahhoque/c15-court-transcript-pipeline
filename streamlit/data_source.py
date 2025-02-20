@@ -1,17 +1,12 @@
 """This script gathers the data sourcing functions."""
 from os import environ as ENV
 from rapidfuzz import fuzz
-
 from psycopg2 import connect
 from psycopg2.extras import RealDictCursor
 from psycopg2.extensions import connection
 import pandas as pd
-import streamlit as st
 import altair as alt
-
-
-
-
+import streamlit as st
 
 @st.cache_resource
 def get_db_connection() -> connection:
@@ -54,12 +49,12 @@ def display_as_table(results: list) -> None:
     if "court" in df.columns:
         df["court"] = df["court"].str.title()
 
-    
+
     df.columns = [col.replace("_", " ") for col in df.columns]
     df.columns = [col.title() for col in df.columns]
 
     df = df.reset_index(drop=True)
-    st.subheader("New Daily Cases") 
+    st.subheader("New Daily Cases")
     st.dataframe(df, hide_index=True, use_container_width=True, height=200)
 
 
@@ -111,10 +106,8 @@ def display_judgment(judgment_data:dict) -> None:
 
     if neutral_citation and judgment_summary:
         st.subheader(neutral_citation)
-        
-
         with st.expander("Read More"):
-                st.text(judgment_summary)
+            st.text(judgment_summary)
 
         st.text(judgment_date)
     else:
@@ -210,17 +203,18 @@ case_type=None, start_date=None, end_date=None) -> pd.DataFrame:
 
     columns = ["neutral_citation", "judgment_date",
                "judgment_summary", "court_name", "judgment_type"]
-    
+
     df = pd.DataFrame(result, columns=columns)
     if search_query:
-        df = df[(df['neutral_citation'].apply(match_judgments_by_citation_search, args=(search_query,)))| (df['judgment_summary'].apply(match_judgments_by_judgment_search, args=(search_query,)))]
+        df = df[(df['neutral_citation'].apply(match_judgments_by_citation_search, args=(search_query,)))|
+                (df['judgment_summary'].apply(match_judgments_by_judgment_search, args=(search_query,)))]
     return df
 
 def match_judgments_by_citation_search(df_value: str,search_query: str) -> bool:
     """Uses fuzzy matching to check if the judgment search input matches the contents of the judgments"""
     neutral_citation_score = fuzz.partial_ratio(search_query.lower(), df_value.lower())
     if neutral_citation_score > 80:
-            return True
+        return True
     return False
 
 def match_judgments_by_judgment_search(df_value: str,search_query: str) -> bool:
@@ -262,7 +256,7 @@ def display_judgment_search(conn: connection) -> None:
 
     with col2:
         with conn.cursor() as cursor:
-            cursor.execute("""SELECT 
+            cursor.execute("""SELECT
                             MIN(judgment_date) AS min_value, 
                             MAX(judgment_date) AS max_value 
                         FROM 
@@ -381,7 +375,7 @@ def fetch_case_overview(conn: connection, neutral_citation: str) -> dict:
         for k, v in case_overview.items()
     }
 
-    
+
 
 
     case_overview["Neutral Citation"] = case_overview["Neutral Citation"].upper()
@@ -412,7 +406,7 @@ def fetch_parties_involved(_conn: connection, neutral_citation: str) -> dict:
                 if role not in parties_involved:
                     parties_involved[role] = []
                 parties_involved[role].append(party)
-        
+  
 
 
     except Exception as e:
