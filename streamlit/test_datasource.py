@@ -64,7 +64,7 @@ def test_display_judgment():
         judgment_data = {"neutral_citation": "Case123",
                          "judgment_summary": "This is a summary", "judgment_date": "2025-01-01"}
         data_source.display_judgment(judgment_data)
-        mock_subheader.assert_called_once_with("Case123")
+        mock_subheader.assert_called_once_with("Ref No. Case123")
         mock_text.assert_any_call("This is a summary")
         mock_text.assert_any_call("2025-01-01")
         mock_write.assert_not_called()
