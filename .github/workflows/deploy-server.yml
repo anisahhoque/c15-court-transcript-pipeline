@@ -50,5 +50,4 @@ jobs:
         docker build --platform linux/amd64 --provenance false -t judgment-reader-server streamlit/.
         docker tag judgment-reader-server ${{ secrets.SERVER_ECR_URL }}:latest
         docker push ${{ secrets.SERVER_ECR_URL }}:latest
-        aws ecs update-service --region eu-west-2 --cluster judgment-reader --service judgment-reader-server --task-definition judgment-reader-server:latest --force-new-deployment
-
+        aws ecs update-service --region eu-west-2 --cluster judgment-reader --service judgment-reader-server --force-new-deployment
