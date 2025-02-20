@@ -73,6 +73,14 @@ def create_client(aws_access_key_id: str, aws_secret_access_key: str) -> BaseCli
         raise
 
 
+def get_judgment_html_hyperlinks(judgments: list[str]) -> str:
+    """Returns html string containing hyperlinks to previous day's judgments."""
+    html_str = ""
+    for judgment in judgments:
+        html_content += f"<a href='http://judgment-reader-server-1125183899.eu-west-2.elb.amazonaws.com/Explore_Judgments?neutration_citation={judgment}#case-overview'>{judgment}</a><br>"
+    return html_str
+
+
 def handler(event, context):
     load_dotenv()
     ses_client = create_client(ENV['ACCESS_KEY'], ENV['SECRET_KEY'])
@@ -80,27 +88,11 @@ def handler(event, context):
                             password=ENV['DB_PASSWORD'], host=ENV['DB_HOST'],
                             port=ENV['DB_PORT']) as conn:
         yesterdays_judgments = get_yesterdays_judgments(conn)
-        html_content = """
-        <html>
-        <body>
-            Hi everyone,
-            <br><br>
-            Please see below a list of the previous day's judgments. Click on a judgment to be taken to its overview:
-            <br><br>
-        """
-        for judgment in yesterdays_judgments:
-            html_content += f"<a href='http://judgment-reader-server-1125183899.eu-west-2.elb.amazonaws.com/Explore_Judgments?neutration_citation={judgment}#case-overview'>{judgment}</a><br>"
-        html_content += """<br><br>
-        Best wishes,
-        <br><br>
-        The Judgment Reader Team
-        </body>
-        <a href='{{ amazonSESUnsubscribeUrl }}'>Click here to unsubscribe</a>
-        </html>
-        """
+        subscribed_emails = get_subscribed_emails(ses_client, ENV['CONTACT_LIST_NAME'])
+        judgment_data = get_judgment_html_hyperlinks(yesterdays_judgments)
 
         return {
             "StatusCode": 200,
-            "Body": html_content,
-            "SubscribedEmails": get_subscribed_emails(ses_client, ENV['CONTACT_LIST_NAME'])
+            "SubscribedEmails": subscribed_emails,
+            "JudgmentData": judgment_data
         }
