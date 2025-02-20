@@ -16,20 +16,6 @@ def main():
     import streamlit as st
 
     apply_custom_styles()
-
-
-    st.markdown(
-        """
-        <style>
-            [data-testid="stSidebar"] {
-                width: 200px !important; /* Maximum width */
-            }
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
-
-
     load_dotenv()
     dashboard_title()
     homepage_text()

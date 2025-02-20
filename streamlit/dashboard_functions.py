@@ -239,19 +239,28 @@ def display_number_of_judgments_by_chamber(conn):
 
 def apply_custom_styles():
     """
-    Applies custom styles to the Streamlit app using Open Sans, Roboto, and Roboto Mono.
+    Applies custom fonts and styles to the Streamlit app, including:
+    - Open Sans and Roboto fonts
+    - Adjusting the sidebar width
     """
     st.markdown(
         """
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;600;700&family=Roboto+Mono:wght@400;600;700&display=swap');
 
+        /* Apply custom font */
         html, body, [class*="st-"] {
             font-family: 'Open Sans', sans-serif;
         }
 
+        /* Apply custom font for code blocks */
         code, pre, .stCodeBlock {
             font-family: 'Roboto Mono', monospace;
+        }
+
+        /* Adjust sidebar width */
+        [data-testid="stSidebar"] {
+            width: 200px !important; /* Set a fixed sidebar width */
         }
         </style>
         """,
