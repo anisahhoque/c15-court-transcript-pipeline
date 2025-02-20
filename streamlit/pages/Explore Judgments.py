@@ -8,6 +8,8 @@ from dashboard_functions import apply_custom_styles
 
 
 
+
+
 def main():
     """This function runs the main block of the webpage."""
     apply_custom_styles()

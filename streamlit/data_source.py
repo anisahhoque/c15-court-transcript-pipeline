@@ -217,10 +217,6 @@ def match_judgments_by_judgment_search(df_value: str,search_query: str) -> bool:
         return True
     return False
 
-def find_min_date(conn:connection) -> datetime:
-    # query = """"SELECT jdugment
-    ...
-
 
 def display_judgment_search(conn: connection) -> None:
     """Displays the interface for Judgment Search Page on Streamlit."""
@@ -246,7 +242,18 @@ def display_judgment_search(conn: connection) -> None:
             "Filter by Type", ["All", "Civil", "Criminal"])
 
     with col3:
-        date_range = st.date_input("Select Date Range", [], key="date_range")
+        with conn.cursor() as cursor:
+            cursor.execute("""SELECT 
+                            MIN(judgment_date) AS min_value, 
+                            MAX(judgment_date) AS max_value 
+                        FROM 
+                            judgment;
+                        """)
+            dates = cursor.fetchall()
+        min_date = dates[0]['min_value']
+        max_date = dates[0]['max_value']
+        date_range = st.date_input("Select Date Range", value=[min_date,max_date],
+                                   min_value=min_date,max_value=max_date, key="date_range")
 
         # If a date range is selected, extract the start and end dates
         if len(date_range) == 2:
