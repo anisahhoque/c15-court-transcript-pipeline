@@ -8,12 +8,14 @@ from data_source import (get_most_recent_judgments,
                          display_as_table, get_most_recent_judgment, display_judgment,
                          get_random_judgment_with_summary_and_date)
 
-from dashboard_functions import cases_by_court, cases_by_judgment_type
+from dashboard_functions import cases_by_court, cases_by_judgment_type, apply_custom_styles
 
 def main():
     """Runs the complete scripts."""
 
     import streamlit as st
+
+    apply_custom_styles()
 
 
     st.markdown(

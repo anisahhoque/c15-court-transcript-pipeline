@@ -235,3 +235,25 @@ def display_number_of_judgments_by_chamber(conn):
 
     # Display chart in Streamlit
     st.altair_chart(chart, use_container_width=True)
+
+
+def apply_custom_styles():
+    """
+    Applies custom styles to the Streamlit app using Open Sans, Roboto, and Roboto Mono.
+    """
+    st.markdown(
+        """
+        <style>
+        @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;600;700&family=Roboto+Mono:wght@400;600;700&display=swap');
+
+        html, body, [class*="st-"] {
+            font-family: 'Open Sans', sans-serif;
+        }
+
+        code, pre, .stCodeBlock {
+            font-family: 'Roboto Mono', monospace;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )

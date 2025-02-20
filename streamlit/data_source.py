@@ -7,6 +7,7 @@ from psycopg2.extras import RealDictCursor
 from psycopg2.extensions import connection
 import pandas as pd
 import streamlit as st
+from datetime import datetime
 
 
 
@@ -68,6 +69,26 @@ def display_as_table(results: list) -> None:
 
     df = df.reset_index(drop=True)
     st.subheader("New Daily Cases")
+    st.dataframe(df, hide_index=True, use_container_width=True)
+
+
+def display_as_table_search(results: list) -> None:
+    """Converts a list of dictionaries into a Pandas DataFrame,
+    capitalises the column titles, and displays it as a table in Streamlit."""
+    df = pd.DataFrame(results)
+
+    if "court" in df.columns:
+        df["court"] = df["court"].str.title()
+    if "judgment_type" in df.columns:
+        df["judgment_type"] = df["judgment_type"].str.title()
+    if "judge" in df.columns:
+        df["judge"] = df["judge"].str.title()
+
+    df.columns = [col.replace("_", " ") for col in df.columns]
+    df.columns = [col.title() for col in df.columns]
+
+    df = df.reset_index(drop=True)
+    st.subheader("Judgments")
     st.dataframe(df, hide_index=True, use_container_width=True)
 
 @st.cache_resource
@@ -196,6 +217,10 @@ def match_judgments_by_judgment_search(df_value: str,search_query: str) -> bool:
         return True
     return False
 
+def find_min_date(conn:connection) -> datetime:
+    # query = """"SELECT jdugment
+    ...
+
 
 def display_judgment_search(conn: connection) -> None:
     """Displays the interface for Judgment Search Page on Streamlit."""
@@ -235,7 +260,7 @@ def display_judgment_search(conn: connection) -> None:
     df["court_name"] = df["court_name"].str.title()
 
     if not df.empty:
-        display_as_table(df)
+        display_as_table_search(df)
 
         selected_citation = st.selectbox(
             "Select a Judgment", df["neutral_citation"])
