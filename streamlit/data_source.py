@@ -34,12 +34,9 @@ def get_most_recent_judgments(_conn: connection) -> list[tuple]:
     query = """
     SELECT 
     j.neutral_citation AS judgment, 
-    j.judge_name AS judge, 
-    c.court_name AS court,
-    jt.judgment_type AS judgment_type
+    c.court_name AS court
     FROM judgment j
     JOIN court c ON j.court_id = c.court_id
-    JOIN judgment_type jt ON j.judgment_type_id = jt.judgment_type_id
     WHERE j.judgment_date = (SELECT MAX(judgment_date) FROM judgment)
     ORDER BY j.judgment_date DESC;
     """
@@ -56,13 +53,7 @@ def display_as_table(results: list) -> None:
 
     if "court" in df.columns:
         df["court"] = df["court"].str.title()
-    if "judgment_type" in df.columns:
-        df["judgment_type"] = df["judgment_type"].str.title()
-    if "judge" in df.columns:
-        df["judge"] = df["judge"].str.title()
-    
-    
-    
+
     
     df.columns = [col.replace("_", " ") for col in df.columns]
     df.columns = [col.title() for col in df.columns]
@@ -227,25 +218,30 @@ def display_judgment_search(conn: connection) -> None:
 
     search_query = st.text_input("🔍 Search a Judgment", "")
 
-    col1, col2, col3 = st.columns([1, 1, 2])
+
+    # Fetch courts dynamically from the database
+    query = "SELECT DISTINCT court_name FROM court"
+    with conn.cursor() as cursor:
+        cursor.execute(query)
+        court_names = [row["court_name"].title() for row in cursor.fetchall()]
+
+    # "All" as a default option
+    court_names.insert(0, "All")
+
+    court_filter = st.selectbox("Filter by Court", court_names)
+
+    if court_filter != "All":
+        court_filter = court_filter.lower()
+    
+    col1, col2 = st.columns(2)
 
     with col1:
-        # Fetch courts dynamically from the database
-        query = "SELECT DISTINCT court_name FROM court"
-        with conn.cursor() as cursor:
-            cursor.execute(query)
-            court_names = [row["court_name"] for row in cursor.fetchall()]
-
-        # "All" as a default option
-        court_names.insert(0, "All")
-
-        court_filter = st.selectbox("Filter by Court", court_names)
-
-    with col2:
         type_filter = st.selectbox(
             "Filter by Type", ["All", "Civil", "Criminal"])
+        if type_filter != "All":
+            type_filter = type_filter.lower()
 
-    with col3:
+    with col2:
         date_range = st.date_input("Select Date Range", [], key="date_range")
 
         # If a date range is selected, extract the start and end dates

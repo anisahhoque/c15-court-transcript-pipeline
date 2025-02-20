@@ -1,4 +1,5 @@
 """This script has the supportive functions for the analytics board."""
+import streamlit.components.v1 as components
 import pandas as pd
 import altair as alt
 from psycopg2 import connect as connection
@@ -237,32 +238,23 @@ def display_number_of_judgments_by_chamber(conn):
     st.altair_chart(chart, use_container_width=True)
 
 
-def apply_custom_styles():
-    """
-    Applies custom fonts and styles to the Streamlit app, including:
-    - Open Sans and Roboto fonts
-    - Adjusting the sidebar width
-    """
+def adjust_sidebar_width(width=200):
+    """Adjusts the sidebar width in Streamlit and displays a centered image."""
+    imag_url = "https://github.com/anisahhoque/c15-court-transcript-pipeline/blob/main/dev-resources/s-blob-v1-IMAGE-iD349-cbH2c.png?raw=true"
+
+    # Adjust sidebar width and center the image
     st.markdown(
-        """
+        f"""
         <style>
-        @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;600;700&family=Roboto+Mono:wght@400;600;700&display=swap');
-
-        /* Apply custom font */
-        html, body, [class*="st-"] {
-            font-family: 'Open Sans', sans-serif;
-        }
-
-        /* Apply custom font for code blocks */
-        code, pre, .stCodeBlock {
-            font-family: 'Roboto Mono', monospace;
-        }
-
-        /* Adjust sidebar width */
-        [data-testid="stSidebar"] {
-            width: 200px !important; /* Set a fixed sidebar width */
-        }
+        [data-testid="stSidebar"] {{
+            width: {width}px !important;
+        }}
         </style>
+        <div style="padding: 10px; text-align: center;">
+            <img src="{imag_url}" width="20%" alt="Sidebar Image"/>
+        </div>
         """,
         unsafe_allow_html=True
     )
+
+
