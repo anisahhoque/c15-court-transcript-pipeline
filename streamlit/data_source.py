@@ -12,11 +12,11 @@ import streamlit as st
 def get_db_connection() -> connection:
     """Returns a live connection to PostgreSQL database with RealDictCursor as default."""
     config = {
-        "dbname": ENV.get("TEST_DB_NAME"),
-        "user": ENV.get("TEST_DB_USER"),
-        "password": ENV.get("TEST_DB_PASSWORD"),
-        "host": ENV.get("TEST_DB_HOST"),
-        "port": ENV.get("TEST_DB_PORT"),
+        "dbname": ENV.get("DB_NAME"),
+        "user": ENV.get("DB_USER"),
+        "password": ENV.get("DB_PASSWORD"),
+        "host": ENV.get("DB_HOST"),
+        "port": ENV.get("DB_PORT"),
     }
 
     return connect(cursor_factory=RealDictCursor, **config)
