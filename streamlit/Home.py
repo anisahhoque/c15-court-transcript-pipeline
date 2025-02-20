@@ -23,12 +23,14 @@ def main():
     conn = get_db_connection()
     col1, col2 = st.columns(2)
     with col1:
-        st.subheader("Most Recent Case")
-        most_recent_judg = get_most_recent_judgment(conn)
-        display_judgment(most_recent_judg)
+        st.subheader("Most Recent Judgment")
+
+
+        most_recent_judgement = get_most_recent_judgment(conn)
+        display_judgment(most_recent_judgement)
 
     with col2:
-        st.subheader("🌟Case of the Day")
+        st.subheader("🌟Judgment of the Day")
         random_judgment = get_random_judgment_with_summary_and_date(conn)
         display_judgment(random_judgment)
 

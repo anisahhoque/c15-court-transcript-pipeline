@@ -162,9 +162,9 @@ def display_judgments_by_judge(conn):
     # Create Altair bar chart
     chart = alt.Chart(df).mark_bar().encode(
         # Sort bars by descending value
-        x=alt.X('Judge', title="Judge", sort="-y"),
-        y=alt.Y('Total Judgments', title="No. of Total Judgments"),
-        color=alt.Color('Judge', title="Judge"),
+        y=alt.Y('Judge', title="Judge", sort="-x"),
+        x=alt.X('Total Judgments', title="No. of Total Judgments"),
+        color=alt.Color('Judge', title="Judge", legend=None),
         tooltip=['Judge', 'Total Judgments']
     ).properties(title=f"Judgments by Judge (Top {num_judges})")
 
@@ -210,6 +210,7 @@ def display_number_of_judgments_by_chamber(conn):
         return
 
     # Get the number of chambers to display from the user
+
     num_chambers = st.slider(
         "Select number of chambers to display:",
         min_value=2,
@@ -217,17 +218,20 @@ def display_number_of_judgments_by_chamber(conn):
         value=2,
         step=2  # Allows selecting any value between 2 and 10
     )
+   
 
     # Limit data to the selected number of chambers
     df_chamber_judgments_limited = df_chamber_judgments.head(num_chambers)
 
     # Create a bar chart with Altair
     chart = alt.Chart(df_chamber_judgments_limited).mark_bar().encode(
-        x=alt.X('Chamber:N', title="Chamber", sort='-y'),
-        y=alt.Y('Total Judgments:Q', title="No. of Total Judgments"),
-        color=alt.Color('Chamber:N', title="Chamber"),
+        y=alt.Y('Chamber:N', title="Chamber", sort='-x'),
+        x=alt.X('Total Judgments:Q', title="No. of Total Judgments"),
+        color=alt.Color('Chamber:N', title="Chamber", legend=None),
         tooltip=['Chamber', 'Total Judgments']
     ).properties(title=f"Top {num_chambers} Judgments by Chamber")
+
+    
 
     # Display chart in Streamlit
     st.altair_chart(chart, use_container_width=True)

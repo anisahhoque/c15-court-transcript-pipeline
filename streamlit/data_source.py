@@ -105,7 +105,7 @@ def display_judgment(judgment_data:dict) -> None:
     judgment_date = judgment_data.get("judgment_date")
 
     if neutral_citation and judgment_summary:
-        st.subheader(neutral_citation)
+        st.subheader(f'Ref No. {neutral_citation}')
         with st.expander("Read More"):
             st.text(judgment_summary)
 
