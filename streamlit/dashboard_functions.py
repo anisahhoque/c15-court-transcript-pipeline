@@ -1,10 +1,8 @@
 """This script has the supportive functions for the analytics board."""
-import streamlit.components.v1 as components
 import pandas as pd
 import altair as alt
 from psycopg2 import connect as connection
 import streamlit as st
-from data_source import fetch_case_overview, fetch_parties_involved
 
 
 def cases_by_court(conn:connection) -> None:
@@ -68,15 +66,15 @@ def cases_by_judgment_type(conn:connection) -> None:
 
 
 def display_judgments_for_court(conn: connection) -> None:
-    query = """select judgment_date,judgment_summary,neutral_citation,judge_name,court_name,judgment_type, role_name as in_favour_of from judgment 
-    join court using (court_id)
-    join judgment_type
-    using (judgment_type_id)
-    join role r on judgment.in_favour_of = r.role_id 
-    
-    """
+    """Displays the judgments for a given court"""
+    query = """select judgment_date,judgment_summary,neutral_citation,
+                    judge_name,court_name,judgment_type,
+                    role_name as in_favour_of from judgment 
+                    join court using (court_id)
+                    join judgment_type
+                    using (judgment_type_id)
+                    join role r on judgment.in_favour_of = r.role_id """
 
-    
     with conn.cursor() as cursor:
         cursor.execute(query)
         result = cursor.fetchall()
@@ -87,32 +85,32 @@ def display_judgments_for_court(conn: connection) -> None:
     if not df.empty:
         df['court_name'] = df['court_name'].str.title()
         df['judgment_date'] = pd.to_datetime(df['judgment_date'])
-        min_date = df['judgment_date'].min().date()  
-        max_date = df['judgment_date'].max().date()   
+        min_date = df['judgment_date'].min().date()
+        max_date = df['judgment_date'].max().date()
         selected_court = st.selectbox(
             "Select a Court", df["court_name"].unique())
-        date_range = st.date_input("Select Date Range", 
+        date_range = st.date_input("Select Date Range",
                         value=[min_date, max_date],
                         min_value=min_date,
-                        max_value=max_date,   
+                        max_value=max_date,
                         key="date_range")
 
 
         if len(date_range) == 2:
             start_date, end_date = date_range
             start_date = pd.to_datetime(start_date)  # Convert to datetime if it's a date or string
-            end_date = pd.to_datetime(end_date)  
+            end_date = pd.to_datetime(end_date)
             df = df[(df['judgment_date'] >= start_date) & (df['judgment_date'] <= end_date)]
         else:
             start_date, end_date = None, None
         df = df[df["court_name"] == selected_court.title()]
 
-     
+
         df['in_favour_of'] = df['in_favour_of'].str.title()
         ruling_df = df.groupby('in_favour_of').size().reset_index()
         ruling_df.columns = ['Ruling','Count']
-   
-   
+
+
         chart_ruling_type = alt.Chart(ruling_df).mark_arc().encode(
             theta=alt.Theta('Count', type='quantitative'),
             color=alt.Color('Ruling',type='nominal')
@@ -120,7 +118,7 @@ def display_judgments_for_court(conn: connection) -> None:
         st.write(f'Cases found: {df.shape[0]}')
         st.altair_chart(chart_ruling_type, use_container_width=True)
 
-        
+
     else:
         st.write("No results found for your search.")
 
@@ -149,9 +147,6 @@ def display_judgments_by_judge(conn):
     # Apply title case to judge names
     df["Judge"] = df["Judge"].str.title()
 
-    # Get total number of judges available
-    total_judges = len(df)
-
     # Streamlit slider for user to select the number of judges to display
     num_judges = st.slider(
         "Select number of judges to display:",
@@ -178,6 +173,7 @@ def display_judgments_by_judge(conn):
 
 
 def display_number_of_judgments_by_chamber(conn):
+    """Displays the a graph showing number of judgments by the chamber"""
     query = """SELECT chamber.chamber_name AS "Chamber", COUNT(*) AS "Total Judgments"
                FROM chamber
                JOIN counsel ON chamber.chamber_id = counsel.chamber_id
@@ -239,7 +235,9 @@ def display_number_of_judgments_by_chamber(conn):
 
 def adjust_sidebar_width(width=200):
     """Adjusts the sidebar width in Streamlit and displays a centered image."""
-    imag_url = "https://github.com/anisahhoque/c15-court-transcript-pipeline/blob/main/dev-resources/s-blob-v1-IMAGE-iD349-cbH2c.png?raw=true"
+    image_url = """https://github.com/anisahhoque/
+                    c15-court-transcript-pipeline/
+                    blob/main/dev-resources/s-blob-v1-IMAGE-iD349-cbH2c.png?raw=true"""
 
     # Adjust sidebar width and center the image
     st.markdown(
@@ -250,10 +248,8 @@ def adjust_sidebar_width(width=200):
         }}
         </style>
         <div style="padding: 10px; text-align: center;">
-            <img src="{imag_url}" width="20%" alt="Sidebar Image"/>
+            <img src="{image_url}" width="20%" alt="Sidebar Image"/>
         </div>
         """,
         unsafe_allow_html=True
     )
-
-
