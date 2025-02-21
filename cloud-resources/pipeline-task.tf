@@ -99,7 +99,7 @@ resource "aws_ecs_task_definition" "pipeline" {
           },
           {
             name = "BUCKET_NAME"
-            value = aws_s3_bucket.judgment_xml.id
+            value = aws_s3_bucket.judgment_html.id
           },
           {
             name = "OPENAI_KEY"
