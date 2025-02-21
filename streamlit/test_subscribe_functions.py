@@ -34,7 +34,7 @@ class TestSubscribeFunctions(unittest.TestCase):
             "sesv2",
             aws_access_key_id=aws_access_key,
             aws_secret_access_key=aws_secret_key,
-            region="eu-west-2"
+            region_name="eu-west-2"
         )
         self.assertIsNotNone(result)  
 
