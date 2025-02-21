@@ -7,7 +7,7 @@ resource "aws_ecs_task_definition" "server" {
       {
         name = "judgment-reader-server"
         image = "${aws_ecr_repository.server.repository_url}:latest"
-        cpu = 1024 
+        cpu = 512 
         memory = 1536
         essential = true 
         environment = [
