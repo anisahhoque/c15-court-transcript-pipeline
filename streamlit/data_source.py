@@ -133,11 +133,12 @@ def cases_over_time(conn: connection):
     with conn.cursor() as cursor:
         cursor.execute(query)
         df = pd.DataFrame(cursor.fetchall())
+        df["judgment_type"] = df["judgment_type"].str.title()
 
     chart = alt.Chart(df).mark_line().encode(
-        x='judgment_date:T',  # Use timestamp for x-axis
-        y='judgment_count:Q',  # Numeric value for y-axis (count of judgments)
-        color='judgment_type:N'  # Color the lines based on judgment_type
+        x=alt.X('judgment_date:T', title="Date"),  # Use timestamp for x-axis
+        y=alt.Y('judgment_count:Q', title="No. of Judgments"),  # Numeric value for y-axis (count of judgments)
+        color=alt.Color('judgment_type:N', title="Type of Judgment")  # Color the lines based on judgment_type
     ).properties(
         title="Judgment Types Over Time"
     )

@@ -2,9 +2,11 @@
 
 
 from dotenv import load_dotenv
-from data_source import get_db_connection  # pylint: disable=import-error
-from dashboard_functions import display_judgments_for_court, adjust_sidebar_width  # pylint: disable=import-error
+from data_source import get_db_connection  # pylint: disable=import-error # pylint: disable=import-error
 import streamlit as st
+from dashboard_functions import adjust_sidebar_width
+from extra_functions import display_judgments_for_court  # pylint: disable=import-error
+
 from components import dashboard_title  # pylint: disable=import-error
 
 def main():
@@ -16,6 +18,8 @@ def main():
     conn = get_db_connection()
     dashboard_title()
     display_judgments_for_court(conn)
+
+
 
 
 if __name__ == "__main__":
