@@ -1,7 +1,12 @@
 import pytest
 import logging
 from unittest.mock import mock_open, patch
-from parse_xml import get_metadata
+import unittest
+import os
+
+from bs4 import BeautifulSoup
+
+from parse_xml import get_metadata, convert_judgment
 
 
 @pytest.mark.parametrize(
@@ -71,5 +76,42 @@ def test_file_not_found(caplog):
 
     assert 'File was not found - nonexistent.xml' in caplog.text
 
+
+class TestConvertJudgment(unittest.TestCase):
+
+    def setUp(self):
+        self.html_folder_path = 'test_html_folder'
+        self.xml_file_path = 'test_file.xml'
+        self.xml_file_name = 'test_file.xml'
+
+        self.sample_xml_content = """<root>
+            <judgmentBody>
+                <p>Judgment content goes here.</p>
+            </judgmentBody>
+        </root>"""
+
+        with open(self.xml_file_path, 'w', encoding='UTF-8') as f:
+            f.write(self.sample_xml_content)
+
+    def tearDown(self):
+        if os.path.exists(self.html_folder_path):
+            for file in os.listdir(self.html_folder_path):
+                os.remove(os.path.join(self.html_folder_path, file))
+            os.rmdir(self.html_folder_path)
+        if os.path.exists(self.xml_file_path):
+            os.remove(self.xml_file_path)
+
+    def test_convert_judgment(self):
+        convert_judgment(self.html_folder_path, self.xml_file_path, self.xml_file_name)
+
+        html_file_path = os.path.join(self.html_folder_path, 'test_file.html')
+        self.assertTrue(os.path.exists(html_file_path))
+
+        with open(html_file_path, 'r', encoding='UTF-8') as f:
+            content = f.read()
+            soup = BeautifulSoup(content, 'html.parser')
+            judgment_body = soup.find('p')
+            self.assertIsNotNone(judgment_body)
+            self.assertEqual(judgment_body.text, 'Judgment content goes here.')
 
 

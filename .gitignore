@@ -184,3 +184,7 @@ judgments
 prompt-engineering/*.json
 
 seed.sql
+
+*.html
+
+judgments_html
