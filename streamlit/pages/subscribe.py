@@ -3,7 +3,7 @@ from os import environ as ENV
 
 import streamlit as st
 
-from streamlit.subscribe_functions import is_valid_email, create_client, create_contact
+from subscribe_functions import is_valid_email, create_client, create_contact
 
 def main():
     """Main function to run subscribe page."""
