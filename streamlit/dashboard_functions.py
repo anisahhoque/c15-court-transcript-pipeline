@@ -115,12 +115,12 @@ def display_judgments_for_court(conn: connection) -> None:
             theta=alt.Theta('Count', type='quantitative'),
             color=alt.Color('Ruling',type='nominal')
         ).properties(title="Number of Rulings by Court")
-        st.write(f'Cases found: {df.shape[0]}')
+        st.html(f'<p>Cases found: {df.shape[0]}')
         st.altair_chart(chart_ruling_type, use_container_width=True)
 
 
     else:
-        st.write("No results found for your search.")
+        st.html("<p>No results found for your search.")
 
 def display_judgments_by_judge(conn):
     """Displays a dynamic bar chart of judgments by judge with user-selected limit."""
@@ -141,7 +141,7 @@ def display_judgments_by_judge(conn):
 
     # Ensure there's data before proceeding
     if df.empty:
-        st.warning("No data available for judgments by judge.")
+        st.warning("<p>No data available for judgments by judge.")
         return
 
     # Apply title case to judge names
@@ -242,7 +242,7 @@ def adjust_sidebar_width(width=200):
     image_url = """https://github.com/anisahhoque/c15-court-transcript-pipeline/blob/main/dev-resources/s-blob-v1-IMAGE-iD349-cbH2c.png?raw=true"""
 
     # Adjust sidebar width and center the image
-    st.markdown(
+    st.html(
         f"""
         <style>
         [data-testid="stSidebar"] {{
@@ -252,6 +252,5 @@ def adjust_sidebar_width(width=200):
         <div style="padding: 10px; text-align: center;">
             <img src="{image_url}" width="20%" alt="Sidebar Image"/>
         </div>
-        """,
-        unsafe_allow_html=True
+        """
     )
