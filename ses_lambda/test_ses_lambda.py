@@ -21,7 +21,8 @@ class TestSesLambda(unittest.TestCase):
             password="password",
             host="localhost",
             port="5432",
-            cursor_factory=RealDictCursor
+            cursor_factory=RealDictCursor,
+            connect_timeout=30
         )
 
     @patch("ses_lambda.psycopg2.connect", side_effect=DatabaseError)
@@ -38,7 +39,8 @@ class TestSesLambda(unittest.TestCase):
         mock_client.assert_called_once_with(
             "sesv2",
             aws_access_key_id="access_key",
-            aws_secret_access_key="secret_key"
+            aws_secret_access_key="secret_key",
+            region_name="eu-west-2"
         )
         self.assertIsNotNone(ses_client)
 
