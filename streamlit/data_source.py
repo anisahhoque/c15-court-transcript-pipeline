@@ -7,6 +7,8 @@ from psycopg2.extensions import connection
 import pandas as pd
 import altair as alt
 import streamlit as st
+from boto3 import client
+from botocore.client import BaseClient
 
 @st.cache_resource
 def get_db_connection() -> connection:
@@ -20,6 +22,12 @@ def get_db_connection() -> connection:
     }
 
     return connect(cursor_factory=RealDictCursor, **config)
+
+@st.cache_resource
+def create_client() -> BaseClient:
+    """Returns a BaseClient object for s3 service specified by the provided keys."""
+    return client("s3", aws_access_key_id=ENV['ACCESS_KEY'],
+                           aws_secret_access_key=ENV['SECRET_KEY'])
 
 
 @st.cache_resource
@@ -226,7 +234,24 @@ def match_judgments_by_judgment_search(df_value: str,search_query: str) -> bool:
     return False
 
 
-def display_judgment_search(conn: connection) -> None:
+def fetch_judgment_html(neutral_citation: str, s_three_client: BaseClient) -> str:
+    """Fetches judgment html from bucket, returns a string."""
+    file_key = ''.join(char for char in neutral_citation if char.isalnum() or char == " ")
+    file_key = file_key.lower().split()
+    if len(file_key) == 4:
+        file_key = '_'.join([file_key[1], file_key[3], file_key[0], file_key[2]])
+    else:
+        file_key = '_'.join([file_key[1], file_key[0], file_key[2]])
+    file_key += '.html'
+    try:
+        obj = s_three_client.get_object(Bucket=ENV['BUCKET_NAME'], Key=file_key)
+        html_content = obj['Body'].read().decode('utf-8')
+        return html_content
+    except Exception:
+        st.error('File not available.')
+    
+
+def display_judgment_search(conn: connection, s_three_client: BaseClient) -> None:
     """Displays the interface for Judgment Search Page on Streamlit."""
 
     search_query = st.text_input("🔍 Search a Judgment", "")
@@ -292,50 +317,59 @@ def display_judgment_search(conn: connection) -> None:
         )
 
         if selected_citation:
-            col1, col2 = st.columns(2)  # Create two side-by-side columns
+            if 'toggle' not in st.session_state:
+                st.session_state.toggle = False
+            if st.button("Click to alternate between overview and full judgment"):
+                st.session_state.toggle = not st.session_state.toggle
+            if st.session_state.toggle:
+                html_content = fetch_judgment_html(selected_citation, s_three_client)
+                if html_content:
+                    st.markdown(html_content, unsafe_allow_html=True)
+            else:
+                col1, col2 = st.columns(2)  # Create two side-by-side columns
 
-            with col1:
-                case_overview = fetch_case_overview(conn, selected_citation)
+                with col1:
+                    case_overview = fetch_case_overview(conn, selected_citation)
 
-                if case_overview:
-                    st.write("### Case Overview")
-                    st.write(
-                        f"**Neutral Citation:** {case_overview.get('Neutral Citation')}")
-                    st.write(
-                        f"**Judgment Date:** {case_overview.get('Judgment Date')}")
-                    st.write(f"**Court:** {case_overview.get('Court')}")
-                    st.write(
-                        f"**Case Type:** {case_overview.get('Judgment Type')}")
-                    st.write(f"**Judge(s):** {case_overview.get('Judge')}")
-                    st.write(f"**In Favour of:** {case_overview.get('In Favour Of').title()}")
-                else:
-                    st.write("No detailed overview available.")
+                    if case_overview:
+                        st.write("### Case Overview")
+                        st.write(
+                            f"**Neutral Citation:** {case_overview.get('Neutral Citation')}")
+                        st.write(
+                            f"**Judgment Date:** {case_overview.get('Judgment Date')}")
+                        st.write(f"**Court:** {case_overview.get('Court')}")
+                        st.write(
+                            f"**Case Type:** {case_overview.get('Judgment Type')}")
+                        st.write(f"**Judge(s):** {case_overview.get('Judge')}")
+                        st.write(f"**In Favour of:** {case_overview.get('In Favour Of').title()}")
+                    else:
+                        st.write("No detailed overview available.")
 
-            with col2:
-                # Fetch and display parties involved
-                parties_involved = fetch_parties_involved(
-                    conn, selected_citation)
+                with col2:
+                    # Fetch and display parties involved
+                    parties_involved = fetch_parties_involved(
+                        conn, selected_citation)
 
-                if parties_involved:
-                    st.write("### Parties Involved")
-                    for role in parties_involved:
-                        if len(parties_involved[role]) <= 1:
-                            for party in parties_involved[role]:
-                                st.write(f"#### {role.title()}")
-                                st.write(f"- {party.title()}")
+                    if parties_involved:
+                        st.write("### Parties Involved")
+                        for role in parties_involved:
+                            if len(parties_involved[role]) <= 1:
+                                for party in parties_involved[role]:
+                                    st.write(f"#### {role.title()}")
+                                    st.write(f"- {party.title()}")
 
-                        elif len(parties_involved[role]) > 1:
-                            st.write(f"#### {role}s")
-                            for party in parties_involved[role]:
-                                st.write(f"- {party.title()}")
+                            elif len(parties_involved[role]) > 1:
+                                st.write(f"#### {role}s")
+                                for party in parties_involved[role]:
+                                    st.write(f"- {party.title()}")
 
-                else:
-                    st.write("No party information available.")
+                    else:
+                        st.write("No party information available.")
 
-            # Display the full judgment summary
-            judgment_summary = case_overview["Summary"]
-            st.write("### Full Judgment Summary")
-            st.write(judgment_summary)
+                # Display the full judgment summary
+                judgment_summary = case_overview["Summary"]
+                st.write("### Full Judgment Summary")
+                st.write(judgment_summary)
 
     else:
         st.write("No results found for your search.")
