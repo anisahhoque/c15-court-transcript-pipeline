@@ -2,10 +2,10 @@
 import re
 import logging
 
+import streamlit as st
 from boto3 import client
 from botocore.client import BaseClient
-from botocore.config import Config
-from botocore.exceptions import NoCredentialsError, PartialCredentialsError
+from botocore.exceptions import NoCredentialsError, PartialCredentialsError, ClientError
 
 
 def is_valid_email(email):
@@ -26,7 +26,8 @@ def create_client(aws_access_key_id: str, aws_secret_access_key: str) -> BaseCli
     """Returns a BaseClient object for s3 service specified by the provided keys."""
     try:
         ses_client = client("sesv2", aws_access_key_id=aws_access_key_id,
-                           aws_secret_access_key=aws_secret_access_key)
+                           aws_secret_access_key=aws_secret_access_key,
+                           region_name="eu-west-2")
         logging.info("Successfully connected to ses.")
         return ses_client
     except (NoCredentialsError, PartialCredentialsError) as e:
@@ -39,14 +40,18 @@ def create_contact(ses_client: BaseClient, contact_list_name: str, email: str) -
     Returns None."""
     if not is_valid_email(email):
         raise ValueError("Invalid email - please check the email you've entered.")
-    ses_client.create_contact(
-        ContactListName=contact_list_name,
-        EmailAddress=email,
-        TopicPreferences=[
-            {
-                'TopicName': 'daily-update',
-                'SubscriptionStatus': 'OPT_IN'
-            }
-        ],
-        UnsubscribeAll=False
-    )
+    try:
+        ses_client.create_contact(
+            ContactListName=contact_list_name,
+            EmailAddress=email,
+            TopicPreferences=[
+                {
+                    'TopicName': 'daily-update',
+                    'SubscriptionStatus': 'OPT_IN'
+                }
+            ],
+            UnsubscribeAll=False
+        )
+        st.write("Subscribed to daily judgment reader emails.")
+    except ClientError:
+        st.error("You're already subscribed!")
