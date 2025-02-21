@@ -44,6 +44,10 @@ resource "aws_ecs_task_definition" "server" {
           {
             name = "BUCKET_NAME"
             value = aws_s3_bucket.judgment_xml.id
+          },
+          {
+            name = "CONTACT_LIST_NAME"
+            value = aws_sesv2_contact_list.daily_update.contact_list_name
           }
         ]
       logConfiguration = {

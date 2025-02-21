@@ -29,3 +29,7 @@ variable "http_ports" {
 variable "openai_key" {
   type = string
 }
+
+variable "my_email" {
+  type = string
+}
