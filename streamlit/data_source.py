@@ -366,7 +366,7 @@ def display_judgment_search(conn: connection, s_three_client: BaseClient) -> Non
                                 party_str_whole += parties_str
 
                             elif len(parties_involved[role]) > 1:
-                                parties_str = f"""<h2>{role}s:<ul>"""
+                                parties_str = f"""<h2>{role.title()}s:<ul>"""
                                 for party in parties_involved[role]:
                                     parties_str += f"<li><p>{party.title()}"
                                 party_str_whole += parties_str
