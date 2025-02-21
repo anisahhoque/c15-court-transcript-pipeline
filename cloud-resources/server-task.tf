@@ -1,16 +1,14 @@
 resource "aws_ecs_task_definition" "server" {
   family = "judgment-reader-server"
   network_mode = "host"
-  cpu = 256
-  memory = 512
   execution_role_arn = "arn:aws:iam::129033205317:role/ecsTaskExecutionRole"
   container_definitions = jsonencode(
     [
       {
         name = "judgment-reader-server"
         image = "${aws_ecr_repository.server.repository_url}:latest"
-        cpu = 256 
-        memory = 512
+        cpu = 512 
+        memory = 1536
         essential = true 
         environment = [
           {
@@ -43,7 +41,7 @@ resource "aws_ecs_task_definition" "server" {
           },
           {
             name = "BUCKET_NAME"
-            value = aws_s3_bucket.judgment_xml.id
+            value = aws_s3_bucket.judgment_html.id
           },
           {
             name = "CONTACT_LIST_NAME"

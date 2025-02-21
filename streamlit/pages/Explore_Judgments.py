@@ -3,7 +3,7 @@
 # pylint: disable=invalid-name
 
 from components import dashboard_title  # pylint: disable=import-error
-from data_source import get_db_connection, display_judgment_search  # pylint: disable=import-error
+from data_source import get_db_connection, create_client, display_judgment_search  # pylint: disable=import-error
 from dashboard_functions import adjust_sidebar_width
 import streamlit as st
 
@@ -17,7 +17,8 @@ def main():
             st.html(f'<style>{css.read()}</style>')
     dashboard_title()
     conn = get_db_connection()
-    display_judgment_search(conn)
+    s_three_client = create_client()
+    display_judgment_search(conn, s_three_client)
 
 if __name__ == "__main__":
     main()
