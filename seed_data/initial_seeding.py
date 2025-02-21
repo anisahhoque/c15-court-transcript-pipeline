@@ -48,18 +48,22 @@ async def main() -> None:
         logging.info("------------------")
         await download_days_judgments(day, "judgments")
         if os.listdir("judgments"):
-            judgment_data = process_all_judgments("judgments", api_client)
+            judgment_data = process_all_judgments("judgments", "judgments_html", api_client)
             mappings = get_base_maps(conn)
             seed_db_base_tables(judgment_data, conn, mappings)
             updated_mappings = get_base_maps(conn)
             seed_judgment_data(conn, judgment_data, updated_mappings)
             await upload_multiple_files_to_s3(s_three,
-                                              "judgments",
+                                              "judgments_html",
                                               ENV["BUCKET_NAME"])
             judgment_filepaths = [os.path.join("judgments", file) for
                                   file in os.listdir("judgments")]
+            judgment_html_filepaths = [os.path.join("judgments_html", file) for
+                                  file in os.listdir("judgments_html")]
             for judgment in judgment_filepaths:
                 os.remove(judgment)
+            for judgment_html in judgment_html_filepaths:
+                os.remove(judgment_html)
             await asyncio.sleep(5)
 
     conn.close()

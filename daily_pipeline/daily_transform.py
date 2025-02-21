@@ -4,16 +4,17 @@ import logging
 
 from openai import OpenAI
 
-from daily_parse_xml import get_metadata
+from daily_parse_xml import get_metadata, convert_judgment
 from daily_prompt_engineering import get_xml_data, get_case_summary
 
-def process_all_judgments(folder_path: str, api_client: OpenAI) -> list[dict]:
+def process_all_judgments(folder_path: str, html_folder_path: str, api_client: OpenAI) -> list[dict]:
     """Process judgment data, extracting relevant information and returning a list of dicts."""
     judgment_data = []
     judgment_files = os.listdir(folder_path)
     logging.info("Processing judgments...")
     for judgment in judgment_files:
-        file_path = os.path.join("judgments", judgment)
+        file_path = os.path.join(folder_path, judgment)
+        convert_judgment(html_folder_path, file_path, judgment)
         judgment_xml = get_xml_data(file_path)
         metadata = get_metadata(file_path)
         api_data = get_case_summary("gpt-4o-mini", api_client, judgment_xml)
