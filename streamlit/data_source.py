@@ -375,8 +375,9 @@ def display_judgment_search(conn: connection, s_three_client: BaseClient) -> Non
                         st.html("<p>No party information available.")
 
             # Display the full judgment summary
-            judgment_summary = case_overview["Summary"]
-            st.html(f"""<h1>Full Judgment Summary<p id="summary">{judgment_summary}""")
+
+                    judgment_summary = case_overview["Summary"]
+                    st.html(f"""<h1>Full Judgment Summary<p id="summary">{judgment_summary}""")
 
     else:
         st.html("<p>No results found for your search.")
