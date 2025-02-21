@@ -265,11 +265,13 @@ def display_judgment_search(conn: connection, s_three_client: BaseClient) -> Non
     with conn.cursor() as cursor:
         cursor.execute(query)
         court_names = [row["court_name"].title() for row in cursor.fetchall()]
+    
+    court_names.sort()
 
     # "All" as a default option
     court_names.insert(0, "All")
 
-    court_filter = st.selectbox("Filter by Court", court_names)
+    court_filter = (st.selectbox("Filter by Court", court_names))
 
     if court_filter != "All":
         court_filter = court_filter.lower()
@@ -334,43 +336,43 @@ def display_judgment_search(conn: connection, s_three_client: BaseClient) -> Non
                 with col1:
                     case_overview = fetch_case_overview(conn, selected_citation)
 
-                if case_overview:
-                    st.html(
-                        f"""
-                        <h1>Case Overview</h1>
-                        <h2>Neutral Citation:<p>{case_overview.get('Neutral Citation')}</p1></h2>
-                        <h2>Judgment Date:<p>{case_overview.get('Judgment Date')}</p1></h2>
-                        <h2>Court:<p>{case_overview.get('Court')}</p></h2>
-                        <h2>Case Type:<p>{case_overview.get('Judgment Type')}</p1></h2>
-                        <h2>Judge(s):<p>{case_overview.get('Judge')}</p1></h2>
-                        <h2>In Favour of:<p>{case_overview.get('In Favour Of').title()}</p1></h2>
-                        """)
-                else:
-                    st.html("<p>No detailed overview available.")
+                    if case_overview:
+                        st.html(
+                            f"""
+                            <h1>Case Overview</h1>
+                            <h2>Neutral Citation:<p>{case_overview.get('Neutral Citation')}</p1></h2>
+                            <h2>Judgment Date:<p>{case_overview.get('Judgment Date')}</p1></h2>
+                            <h2>Court:<p>{case_overview.get('Court')}</p></h2>
+                            <h2>Case Type:<p>{case_overview.get('Judgment Type')}</p1></h2>
+                            <h2>Judge(s):<p>{case_overview.get('Judge')}</p1></h2>
+                            <h2>In Favour of:<p>{case_overview.get('In Favour Of').title()}</p1></h2>
+                            """)
+                    else:
+                        st.html("<p>No detailed overview available.")
 
                 with col2:
                     # Fetch and display parties involved
                     parties_involved = fetch_parties_involved(
                         conn, selected_citation)
 
-                if parties_involved:
-                    party_str_whole = "<h1>Parties Involved"
-                    
-                    for role in parties_involved:
-                        if len(parties_involved[role]) <= 1:
-                            parties_str = f"""<h2>{role.title()}:<ul>"""
-                            for party in parties_involved[role]:
-                                parties_str+=f"<li><p>{party.title()}"
-                            party_str_whole += parties_str
+                    if parties_involved:
+                        party_str_whole = "<h1>Parties Involved"
+                        
+                        for role in parties_involved:
+                            if len(parties_involved[role]) <= 1:
+                                parties_str = f"""<h2>{role.title()}:<ul>"""
+                                for party in parties_involved[role]:
+                                    parties_str+=f"<li><p>{party.title()}"
+                                party_str_whole += parties_str
 
-                        elif len(parties_involved[role]) > 1:
-                            parties_str = f"""<h2>{role}s:<ul>"""
-                            for party in parties_involved[role]:
-                                parties_str += f"<li><p>{party.title()}"
-                            party_str_whole += parties_str
-                    st.html(party_str_whole)
-                else:
-                    st.html("<p>No party information available.")
+                            elif len(parties_involved[role]) > 1:
+                                parties_str = f"""<h2>{role}s:<ul>"""
+                                for party in parties_involved[role]:
+                                    parties_str += f"<li><p>{party.title()}"
+                                party_str_whole += parties_str
+                        st.html(party_str_whole)
+                    else:
+                        st.html("<p>No party information available.")
 
             # Display the full judgment summary
             judgment_summary = case_overview["Summary"]
