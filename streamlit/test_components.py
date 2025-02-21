@@ -9,14 +9,14 @@ import components
 
 def test_dashboard_title():
     """Test if dashboard_title calls st.markdown with the correct argument."""
-    with patch("streamlit.markdown") as mock_markdown:
+    with patch("streamlit.html") as mock_markdown:
         components.dashboard_title()
         # Normalize whitespace before comparison
         args, kwargs = mock_markdown.call_args
         assert args[0].strip() == """
-        <h1 style="text-align: center;">Judgment Reader</h1>
+        <header style="text-align: center; font-size: 60px;">Judgment Reader</header>
         """.strip()
-        assert kwargs["unsafe_allow_html"] is True
+
 
 
 def normalize_whitespace(text):
@@ -26,7 +26,7 @@ def normalize_whitespace(text):
 
 def test_homepage_text():
     """Test if homepage_text calls st.markdown correctly."""
-    with patch("streamlit.markdown") as mock_markdown:
+    with patch("streamlit.html") as mock_markdown:
         components.homepage_text()
 
         # Ensure one markdown call was made
