@@ -21,6 +21,11 @@ resource "aws_iam_role_policy_attachment" "lambda_role_basic_attachment" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
+resource "aws_iam_role_policy_attachment" "lambda_role_eni" {
+  role = aws_iam_role.lambda_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2FullAccess"
+}
+
 
 data "aws_iam_policy_document" "report_step_role" {
   statement {
@@ -130,6 +135,7 @@ resource "aws_lambda_function" "report" {
   image_uri = "${aws_ecr_repository.report_lambda.repository_url}:latest"
   package_type = "Image"
   architectures = ["arm64"]
+  timeout = 900
   environment {
     variables = {
       DB_NAME = var.db_name
@@ -137,7 +143,17 @@ resource "aws_lambda_function" "report" {
       DB_PORT = aws_db_instance.main.port
       DB_USER = var.db_user
       DB_PASSWORD = var.db_password
+      ACCESS_KEY = var.access_key
+      SECRET_KEY = var.secret_key
+      CONTACT_LIST_NAME = "daily-update"
     }
+  }
+  vpc_config {
+    subnet_ids = [
+      aws_subnet.public_a.id,
+      aws_subnet.public_b.id
+    ]
+    security_group_ids = [aws_security_group.pipeline.id]
   }
   depends_on = [
       aws_cloudwatch_log_group.report_lambda,
