@@ -76,7 +76,7 @@ def compare_chambers(conn):
     with st.container():
         st.write("#### Judgment Count Comparison")
         judgment_chart = alt.Chart(comparison_df).mark_bar().encode(
-            y=alt.Y("Chamber:N", title="Chamber",
+            y=alt.Y("Chamber:N", title=None,
                     axis=alt.Axis(labelLimit=300)),
             x=alt.X("total_judgments:Q", title="Total Judgments"),
             color="Chamber:N"
@@ -87,7 +87,7 @@ def compare_chambers(conn):
     with st.container():
         st.write("#### Criminal Judgment Comparison")
         criminal_chart = alt.Chart(comparison_df).mark_bar().encode(
-            y=alt.Y("Chamber:N", title="Chamber",
+            y=alt.Y("Chamber:N", title=None,
                     axis=alt.Axis(labelLimit=300)),
             x=alt.X("criminal_judgments:Q", title="Criminal Judgments"),
             color="Chamber:N"
@@ -98,7 +98,7 @@ def compare_chambers(conn):
     with st.container():
         st.write("#### Civil Judgment Comparison")
         civil_chart = alt.Chart(comparison_df).mark_bar().encode(
-            y=alt.Y("Chamber:N", title="Chamber",
+            y=alt.Y("Chamber:N", title=None,
                     axis=alt.Axis(labelLimit=300)),
             x=alt.X("civil_judgments:Q", title="Civil Judgments"),
             color="Chamber:N"
