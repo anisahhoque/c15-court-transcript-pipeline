@@ -69,6 +69,7 @@ resource "aws_ecs_service" "server" {
   task_definition = aws_ecs_task_definition.server.id 
   force_delete = true 
   desired_count = 1 
+  deployment_minimum_healthy_percent = 0 
   load_balancer {
     target_group_arn = aws_alb_target_group.server.arn 
     container_name = "judgment-reader-server"
