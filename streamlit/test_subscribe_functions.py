@@ -33,7 +33,8 @@ class TestSubscribeFunctions(unittest.TestCase):
         mock_client.assert_called_once_with(
             "sesv2",
             aws_access_key_id=aws_access_key,
-            aws_secret_access_key=aws_secret_key
+            aws_secret_access_key=aws_secret_key,
+            region="eu-west-2"
         )
         self.assertIsNotNone(result)  
 

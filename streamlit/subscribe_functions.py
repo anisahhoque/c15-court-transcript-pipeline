@@ -26,7 +26,8 @@ def create_client(aws_access_key_id: str, aws_secret_access_key: str) -> BaseCli
     """Returns a BaseClient object for s3 service specified by the provided keys."""
     try:
         ses_client = client("sesv2", aws_access_key_id=aws_access_key_id,
-                           aws_secret_access_key=aws_secret_access_key)
+                           aws_secret_access_key=aws_secret_access_key,
+                           region="eu-west-2")
         logging.info("Successfully connected to ses.")
         return ses_client
     except (NoCredentialsError, PartialCredentialsError) as e:
