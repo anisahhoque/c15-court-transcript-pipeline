@@ -58,7 +58,7 @@ resource "aws_iam_role_policy_attachment" "server_basic" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
   }
 
-resource "aws_iam_role_policy_attachment" "server_risky" {
+resource "aws_iam_role_policy_attachment" "server_registry" {
   role       = aws_iam_role.server.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess"
 }
@@ -72,7 +72,7 @@ resource "aws_iam_instance_profile" "server" {
 resource "aws_launch_template" "server" {
   name_prefix = "judgment-reader-server"
   image_id = "ami-000306e6f42537aac"
-  instance_type = "t2.micro"
+  instance_type = "t2.small"
   vpc_security_group_ids = [aws_security_group.server.id]
 
   iam_instance_profile {
