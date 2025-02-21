@@ -5,3 +5,4 @@ altair
 pandas
 pytest-mock
 rapidfuzz
+boto3
