@@ -16,12 +16,14 @@ def get_db_connection(dbname: str, user: str, password: str, host: str, port: st
     """Establishes a connection to PostgreSQL.
     Returns a PostgreSQL connection object."""
     try:
+        print(dbname, user, password, host, port)
         conn = psycopg2.connect(
             dbname=dbname, user=user, password=password, host=host, port=port,
-            cursor_factory=RealDictCursor)
+            cursor_factory=RealDictCursor,
+            connect_timeout=30)
         return conn
     except psycopg2.DatabaseError as e:
-        raise psycopg2.DatabaseError("Error connecting to database.") from e
+        raise psycopg2.DatabaseError(f"Error connecting to database: {e}") from e
 
 
 def get_yesterdays_judgments(conn: connection) -> list[str]:
@@ -37,35 +39,40 @@ def get_yesterdays_judgments(conn: connection) -> list[str]:
 
 def get_subscribed_emails(ses_client: BaseClient, contact_list_name: str) -> list[str]:
     """Returns a list of emails that have subscribed to the contact list."""
-    contacts = []
+    emails = []
     next_token = None
-    
+
     try:
         while True:
-            response = ses_client.list_contacts(
-                ContactListName=contact_list_name,
-                PageSize=50, 
-                NextToken=next_token
-            )
+            params = {
+                'ContactListName': contact_list_name
+            }
             
-            for contact in response.get('Contacts', []):
-                contacts.append(contact['EmailAddress'])
+            if next_token:
+                params['NextToken'] = next_token
+            
+            response = ses_client.list_contacts(**params)
+            
+            contacts = response.get('Contacts', [])
+            for contact in contacts:
+                emails.append(contact.get('EmailAddress'))
             
             next_token = response.get('NextToken')
+            
             if not next_token:
                 break
-                
+        
+        return emails
     except ClientError as e:
-        print(f"Error retrieving contacts: {e}")
-    
-    return contacts
+        logging.error("Error connecting to client: %s", e)
 
 
 def create_client(aws_access_key_id: str, aws_secret_access_key: str) -> BaseClient:
     """Returns a BaseClient object for ses service specified by the provided keys."""
     try:
         ses_client = client("sesv2", aws_access_key_id=aws_access_key_id,
-                           aws_secret_access_key=aws_secret_access_key)
+                           aws_secret_access_key=aws_secret_access_key,
+                           region_name="eu-west-2")
         logging.info("Successfully connected to ses.")
         return ses_client
     except (NoCredentialsError, PartialCredentialsError) as e:
@@ -90,7 +97,6 @@ def handler(event, context):
         yesterdays_judgments = get_yesterdays_judgments(conn)
         subscribed_emails = get_subscribed_emails(ses_client, ENV['CONTACT_LIST_NAME'])
         judgment_data = get_judgment_html_hyperlinks(yesterdays_judgments)
-
         return {
             "StatusCode": 200,
             "SubscribedEmails": subscribed_emails,
