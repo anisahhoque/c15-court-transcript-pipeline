@@ -226,7 +226,7 @@ resource "aws_sfn_state_machine" "report_step_function" {
           ],
           "Next": "SendEmail",
           "Assign": {
-            "Body": "{% $states.result.Payload.Body %}",
+            "JudgmentData": "{% $states.result.Payload.JudgmentData %}",
             "SubscribedEmails": "{% $states.result.Payload.SubscribedEmails %}"
           }
         },
@@ -237,7 +237,7 @@ resource "aws_sfn_state_machine" "report_step_function" {
             "Content": {
               "Template": {
                 "TemplateArn": "${aws_ses_template.daily_update.arn}",
-                "TemplateData": "{% $Body %}"
+                "TemplateData": "{% $JudgmentData %}"
               }
             }
             "Destination": {
