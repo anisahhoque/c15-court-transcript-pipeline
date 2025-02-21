@@ -15,7 +15,7 @@ from dashboard_functions import cases_by_court, cases_by_judgment_type, adjust_s
 def main():
     """Runs the complete scripts."""
     st.set_page_config(layout="wide")
-
+    #css
     adjust_sidebar_width()
     with open("style.css") as css:
         st.html(f'<style>{css.read()}</style>')
