@@ -19,7 +19,8 @@ def mock_dependencies(mocker):
         "mock_st_columns": mocker.patch("streamlit.columns", return_value=(MagicMock(), MagicMock())),
         "mock_st_subheader": mocker.patch("streamlit.subheader"),
         "mock_cases_by_court": mocker.patch("Home.cases_by_court"),
-        "mock_cases_by_judgment_type": mocker.patch("Home.cases_by_judgment_type")
+        "mock_cases_by_judgment_type": mocker.patch("Home.cases_by_judgment_type"),
+        "mock_cases_over_time":mocker.patch("Home.cases_over_time")
     }
 
 
