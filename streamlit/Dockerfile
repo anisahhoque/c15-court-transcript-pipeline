@@ -4,7 +4,7 @@ RUN mkdir streamlit
 RUN mkdir streamlit/pages
 
 WORKDIR /streamlit
-COPY .streamlit
+COPY .streamlit /streamlit/.streamlit
 COPY Home.py .
 COPY components.py .
 COPY dashboard_functions.py .
