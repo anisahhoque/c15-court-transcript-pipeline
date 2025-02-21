@@ -218,7 +218,7 @@ def display_number_of_judgments_by_chamber(conn):
         value=2,
         step=2  # Allows selecting any value between 2 and 10
     )
-   
+
 
     # Limit data to the selected number of chambers
     df_chamber_judgments_limited = df_chamber_judgments.head(num_chambers)
@@ -231,7 +231,7 @@ def display_number_of_judgments_by_chamber(conn):
         tooltip=['Chamber', 'Total Judgments']
     ).properties(title=f"Top {num_chambers} Judgments by Chamber")
 
-    
+
 
     # Display chart in Streamlit
     st.altair_chart(chart, use_container_width=True)

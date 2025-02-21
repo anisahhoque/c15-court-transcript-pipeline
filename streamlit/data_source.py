@@ -289,7 +289,7 @@ def display_judgment_search(conn: connection) -> None:
 
         selected_citation = st.selectbox(
             "Select a Judgment",
-            df["neutral_citation"], 
+            df["neutral_citation"],
             index=df["neutral_citation"].tolist().index(selected_citation_from_url) if selected_citation_from_url in df["neutral_citation"].values else 0
         )
 
