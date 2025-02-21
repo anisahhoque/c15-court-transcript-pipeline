@@ -1,0 +1,42 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap'); 
+
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Overpass:ital,wght@0,100..900;1,100..900&display=swap');
+html, body, [class*="css"] {
+    font-family: "Times New Roman", serif; 
+    font-size: 18px;
+    font-weight: 500;
+    color: #091747;
+    
+}
+
+p, [class*="css"] {
+    font-family: "Times New Roman", serif; 
+    font-size: 18px;
+    font-weight: 100;
+    color: #FF4B4B;
+}
+
+.bebas-neue-regular {
+  font-family: "Bebas Neue", serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+#summary {
+    font-family: "Times New Roman", serif; 
+    font-size: 18px;
+    font-weight: 300;
+    color: #091747;
+    font-style: normal;
+}
+#drop-down-summary {
+    font-family: "Times New Roman", serif; 
+    font-size: 14px;
+    font-weight: 300;
+    color: #091747;
+    font-style: normal;
+}
+
+
+
+

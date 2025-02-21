@@ -15,24 +15,23 @@ def cases_by_court(conn: connection) -> None:
     LIMIT 10;
     """
 
-    # Execute query using connection
     with conn.cursor() as cursor:
         cursor.execute(query)
         result = cursor.fetchall()
 
-    # Prepare data for visualization
     df_court_cases = pd.DataFrame(result, columns=["Court", "Case Count"])
     df_court_cases["Court"] = df_court_cases["Court"].str.title()
 
-    # Create chart using Altair
+    
     chart_court_cases = alt.Chart(df_court_cases).mark_bar().encode(
-        x=alt.X('Court', title="Court Name", sort="-y"),
-        y=alt.Y('Case Count', title="No. of Total Judgments"),
-        color=alt.Color('Court', title="Courts"),
+        y=alt.Y('Court', title=None, sort="-x",
+                axis=alt.Axis(labelLimit=500)),
+        x=alt.X('Case Count', title="No. of Total Judgments"),
+        color=alt.Color('Court', title=None, legend=None),
         tooltip=['Court', 'Case Count']
     ).properties(title="Number of Judgments by Court")
 
-    # Display chart in Streamlit
+
     st.altair_chart(chart_court_cases, use_container_width=True)
 
 
@@ -44,17 +43,17 @@ def cases_by_judgment_type(conn: connection) -> None:
     ON judgment.judgment_type_id = judgment_type.judgment_type_id
     GROUP BY judgment_type"""
 
-    # Execute query using connection
+
     with conn.cursor() as cursor:
         cursor.execute(query)
         result = cursor.fetchall()
 
-    # Prepare data for visualization
+
     df_judgment_type = pd.DataFrame(
         result, columns=["Judgment Type", "Case Count"])
     df_judgment_type["Judgment Type"] = df_judgment_type["Judgment Type"].str.title()
 
-    # Create chart using Altair
+
     chart_judgment_type = alt.Chart(df_judgment_type).mark_arc().encode(
         theta=alt.Theta('Case Count', title="Types"),
         color=alt.Color('Judgment Type', title="Types"),
@@ -115,12 +114,12 @@ def display_judgments_for_court(conn: connection) -> None:
             theta=alt.Theta('Count', type='quantitative'),
             color=alt.Color('Ruling',type='nominal')
         ).properties(title="Number of Rulings by Court")
-        st.write(f'Cases found: {df.shape[0]}')
+        st.html(f'<p>Cases found: {df.shape[0]}')
         st.altair_chart(chart_ruling_type, use_container_width=True)
 
 
     else:
-        st.write("No results found for your search.")
+        st.html("<p>No results found for your search.")
 
 def display_judgments_by_judge(conn):
     """Displays a dynamic bar chart of judgments by judge with user-selected limit."""
@@ -141,7 +140,7 @@ def display_judgments_by_judge(conn):
 
     # Ensure there's data before proceeding
     if df.empty:
-        st.warning("No data available for judgments by judge.")
+        st.warning("<p>No data available for judgments by judge.")
         return
 
     # Apply title case to judge names
@@ -218,7 +217,7 @@ def display_number_of_judgments_by_chamber(conn):
         value=2,
         step=2  # Allows selecting any value between 2 and 10
     )
-   
+
 
     # Limit data to the selected number of chambers
     df_chamber_judgments_limited = df_chamber_judgments.head(num_chambers)
@@ -231,7 +230,7 @@ def display_number_of_judgments_by_chamber(conn):
         tooltip=['Chamber', 'Total Judgments']
     ).properties(title=f"Top {num_chambers} Judgments by Chamber")
 
-    
+
 
     # Display chart in Streamlit
     st.altair_chart(chart, use_container_width=True)
@@ -242,7 +241,7 @@ def adjust_sidebar_width(width=200):
     image_url = """https://github.com/anisahhoque/c15-court-transcript-pipeline/blob/main/dev-resources/s-blob-v1-IMAGE-iD349-cbH2c.png?raw=true"""
 
     # Adjust sidebar width and center the image
-    st.markdown(
+    st.html(
         f"""
         <style>
         [data-testid="stSidebar"] {{
@@ -252,6 +251,26 @@ def adjust_sidebar_width(width=200):
         <div style="padding: 10px; text-align: center;">
             <img src="{image_url}" width="20%" alt="Sidebar Image"/>
         </div>
-        """,
-        unsafe_allow_html=True
+        """
     )
+
+def get_judgment_data(chamber_id, conn):
+    query = """
+        SELECT 
+            COUNT(j.neutral_citation) AS total_judgments,
+            SUM(CASE WHEN jt.judgment_type = 'criminal' THEN 1 ELSE 0 END) AS criminal_judgments,
+            SUM(CASE WHEN jt.judgment_type = 'civil' THEN 1 ELSE 0 END) AS civil_judgments
+        FROM chamber c
+        LEFT JOIN counsel co ON c.chamber_id = co.chamber_id
+        LEFT JOIN counsel_assignment ca ON co.counsel_id = ca.counsel_id
+        LEFT JOIN party p ON ca.party_id = p.party_id
+        LEFT JOIN judgment j ON p.neutral_citation = j.neutral_citation
+        LEFT JOIN judgment_type jt ON j.judgment_type_id = jt.judgment_type_id
+        WHERE c.chamber_id = %s
+    """
+    with conn.cursor() as cursor:
+        cursor.execute(query, (chamber_id,))
+        result = cursor.fetchone()
+
+    return pd.DataFrame([result]) if result else pd.DataFrame(columns=["total_judgments", "criminal_judgments", "civil_judgments"]) 
+
