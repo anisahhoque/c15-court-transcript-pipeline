@@ -3,3 +3,6 @@ aws ecr get-login-password --region eu-west-2 | docker login --username AWS --pa
 docker build --platform linux/arm64 --provenance false -t judgment-reader-report-lambda ses_lambda/.
 docker tag judgment-reader-report-lambda ${REPORT_LAMBDA_ECR_URL}:latest
 docker push ${REPORT_LAMBDA_ECR_URL}:latest
+aws lambda update-function-code \
+  --function-name judgment-reader-report-lambda --image-uri ${REPORT_LAMBDA_ECR_URL}
+

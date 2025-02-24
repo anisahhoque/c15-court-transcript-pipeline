@@ -15,11 +15,13 @@ resource "null_resource" "initialise_pipeline_ecr" {
   }
 }
 
+/*
 locals {
-  pipeline_sg_ports = concat(
-    var.http_ports,
-    [aws_db_instance.main.port]
-  )
+  pipeline_sg_ports = [
+    80,
+    443,
+    5432
+  ]
 }
 
 resource "aws_security_group" "pipeline" {
@@ -27,7 +29,11 @@ resource "aws_security_group" "pipeline" {
   vpc_id = aws_vpc.main.id
 
   dynamic "ingress" {
-    for_each = local.pipeline_sg_ports
+    for_each = [
+      80,
+      443,
+      5432
+    ]
 
     content {
       from_port = ingress.value 
@@ -38,7 +44,11 @@ resource "aws_security_group" "pipeline" {
   }
 
   dynamic "egress" {
-    for_each = local.pipeline_sg_ports
+    for_each = [
+      80,
+      443,
+      5432
+    ]
 
     content {
       from_port = egress.value 
@@ -48,6 +58,7 @@ resource "aws_security_group" "pipeline" {
     }
   }
 }
+*/
 
 resource "aws_cloudwatch_log_group" "pipeline" {
   name = "judgment-reader-pipeline"
@@ -200,7 +211,7 @@ resource "aws_scheduler_schedule" "pipeline" {
 
       network_configuration {
         assign_public_ip = true
-        security_groups = [aws_security_group.pipeline.id]
+        security_groups = [aws_security_group.master.id]
         subnets = [
           aws_subnet.public_a.id,
           aws_subnet.public_b.id

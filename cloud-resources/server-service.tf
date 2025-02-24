@@ -3,6 +3,8 @@ resource "aws_cloudwatch_log_group" "server" {
   retention_in_days = 7
 }
 
+/*
+Currently commented out due to ongoing issue with AWS
 resource "aws_security_group" "server_alb" {
   name = "judgment-reader-server-lb"
   vpc_id = aws_vpc.main.id
@@ -29,12 +31,13 @@ resource "aws_security_group" "server_alb" {
     }
   }
 }
+*/
 
 resource "aws_alb" "server" {
   name = "judgment-reader-server"
   internal = false
   load_balancer_type = "application"
-  security_groups = [aws_security_group.server_alb.id]
+  security_groups = [aws_security_group.master.id]
   subnets = [aws_subnet.public_a.id, aws_subnet.public_b.id]
 
   enable_deletion_protection = false

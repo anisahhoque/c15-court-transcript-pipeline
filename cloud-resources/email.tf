@@ -111,6 +111,7 @@ resource "aws_iam_role_policy" "report_scheduler_policy"{
 resource "aws_ecr_repository" "report_lambda" {
   name = "judgment-reader-report-lambda"
   image_tag_mutability = "MUTABLE"
+  force_delete = true
 }
 
 resource "aws_cloudwatch_log_group" "report_lambda" {
@@ -121,9 +122,8 @@ resource "null_resource" "report_lambda"{
   provisioner "local-exec" {
     command = <<EOT
       aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin ${local.account_id}.dkr.ecr.eu-west-2.amazonaws.com
-      docker pull public.ecr.aws/ecs-sample-image/amazon-ecs-sample:latest
-      docker build --platform linux/arm64 --provenance false -t judgment-reader-server .
-      docker tag public.ecr.aws/ecs-sample-image/amazon-ecs-sample:latest ${aws_ecr_repository.report_lambda.repository_url}:latest
+      docker pull hello-world
+      docker tag hello-world ${aws_ecr_repository.report_lambda.repository_url}:latest
       docker push ${aws_ecr_repository.report_lambda.repository_url}:latest
     EOT
   }
@@ -153,7 +153,7 @@ resource "aws_lambda_function" "report" {
       aws_subnet.public_a.id,
       aws_subnet.public_b.id
     ]
-    security_group_ids = [aws_security_group.pipeline.id]
+    security_group_ids = [aws_security_group.master.id]
   }
   depends_on = [
       aws_cloudwatch_log_group.report_lambda,

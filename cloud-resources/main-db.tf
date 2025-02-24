@@ -6,6 +6,9 @@ resource "aws_db_subnet_group" "default" {
   ]
 }
 
+/*
+Currently commented out due to ongoing issue with AWS
+
 resource "aws_security_group" "main_database" {
   name = "judgment-reader-main-database"
   vpc_id = aws_vpc.main.id
@@ -25,6 +28,7 @@ resource "aws_security_group" "main_database" {
     cidr_blocks = ["10.0.0.0/16"]
   }
 } 
+*/
 
 resource "aws_db_instance" "main" {
   allocated_storage = 20
@@ -43,7 +47,7 @@ resource "aws_db_instance" "main" {
   multi_az = false
   db_subnet_group_name = aws_db_subnet_group.default.name
   deletion_protection = false
-  vpc_security_group_ids = [aws_security_group.main_database.id]
+  vpc_security_group_ids = [aws_security_group.master.id]
 }
 
 locals {

@@ -1,3 +1,6 @@
+/*
+Commented out due to current breaking bug with AWS
+
 locals {
   server_sg_ports = concat([
       aws_db_instance.main.port,
@@ -34,7 +37,7 @@ resource "aws_security_group" "server" {
     }
   }
 }
-
+*/
 data "aws_iam_policy_document" "server_instance_assume" {
   statement {
     effect = "Allow"
@@ -73,7 +76,7 @@ resource "aws_launch_template" "server" {
   name_prefix = "judgment-reader-server"
   image_id = "ami-000306e6f42537aac"
   instance_type = "t2.small"
-  vpc_security_group_ids = [aws_security_group.server.id]
+  vpc_security_group_ids = [aws_security_group.master.id]
 
   iam_instance_profile {
     arn = aws_iam_instance_profile.server.arn
