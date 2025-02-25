@@ -1,19 +1,17 @@
 #pylint:disable=unused-variable
 import os
 import logging
-
 import psycopg2.extras
 import pytest
-from unittest import mock
-from unittest.mock import MagicMock, AsyncMock, ANY
+from unittest.mock import MagicMock, AsyncMock, ANY, patch
 import psycopg2
 from daily_load import (get_judgment_type_mapping, get_db_connection,
                   get_court_mapping, get_role_mapping, 
                   upload_file_to_s3, upload_multiple_files_to_s3)
 
 def test_get_db_connection_successfully():
-    mock_conn = mock.MagicMock(spec=psycopg2.extensions.connection)
-    with mock.patch("psycopg2.connect", return_value=mock_conn) as mock_connect:
+    mock_conn = MagicMock(spec=psycopg2.extensions.connection)
+    with patch("psycopg2.connect", return_value=mock_conn) as mock_connect:
         conn = get_db_connection("dbname", "user", "password", "host", "port")
 
         mock_connect.assert_called_once_with(
@@ -25,7 +23,7 @@ def test_get_db_connection_successfully():
 
 def test_get_db_connection_unsuccessful():
 
-    with mock.patch("psycopg2.connect", side_effect=psycopg2.DatabaseError("Connection failed")) as mock_connect:
+    with patch("psycopg2.connect", side_effect=psycopg2.DatabaseError("Connection failed")) as mock_connect:
         try:
             get_db_connection("dbname", "user", "password", "host", "port")
         except psycopg2.DatabaseError as e:
@@ -39,8 +37,8 @@ def test_get_judgment_type_mapping_valid_case():
     mock_conn.cursor.return_value.__enter__.return_value = mock_cursor"""
 
 
-    mock_conn = mock.MagicMock()
-    mock_cursor = mock.MagicMock()
+    mock_conn = MagicMock()
+    mock_cursor = MagicMock()
     mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
     mock_cursor.fetchall.return_value = [
         { 'judgment_type':'civil', 'judgment_type_id':1},
@@ -56,8 +54,8 @@ def test_get_judgment_type_mapping_valid_case():
     assert result == expected_result
     
 def test_get_court_mapping_valid_case():
-    mock_conn = mock.MagicMock()
-    mock_cursor = mock.MagicMock()
+    mock_conn = MagicMock()
+    mock_cursor = MagicMock()
     mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
     mock_cursor.fetchall.return_value = [
         { 'court_name':'high court of justice', 'court_id':1},
@@ -75,8 +73,8 @@ def test_get_court_mapping_valid_case():
     assert result == expected_result
 
 def test_get_role_mapping_valid_case():
-    mock_conn = mock.MagicMock()
-    mock_cursor = mock.MagicMock()
+    mock_conn = MagicMock()
+    mock_cursor = MagicMock()
     mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
     mock_cursor.fetchall.return_value = [
         { 'role_name':'respondent', 'role_id':1},
