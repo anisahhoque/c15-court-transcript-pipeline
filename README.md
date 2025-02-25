@@ -7,6 +7,7 @@ This project automates the enhancement, discoverability, and analysis of court t
 ## Set Up
 
 ### Requirements
+
 - OpenAI API Key for GPT-4
 - Python 3.13
 - Key pair for AWS Account
@@ -16,7 +17,9 @@ This project automates the enhancement, discoverability, and analysis of court t
 - Bash
 
 ### How to set up the repository
+
 Clone the repository and navigate into the directory
+
 ```bash
 git clone https://github.com/anisahhoque/c15-court-transcript-pipeline.git
 cd c15-court-transcript-pipeline
@@ -25,7 +28,9 @@ cd c15-court-transcript-pipeline
 ## Deployment
 
 ### 1. Initialise cloud resources
+
 For this step, follow the instructions in `/cloud-resources`. Once you have, take the outputs and use them to configure a file named `.env` in the root directory of this project as follows:
+
 ```
 AWS_ACCOUNT_ID=<aws_account_id>
 PIPELINE_ECR_URL=<pipeline_ecr_url>
@@ -34,14 +39,18 @@ HISTORICAL_PIPELINE_ECR_URL=<historical_pipeline_ecr_url>
 ```
 
 ### 2. Initialise database
+
 To initialise the database simply run the following command. It will both format the database, and seed it with a variable number of days worth of data.
+
 ```bash
 bash deploy-historical-pipeline.sh [number of days to load, default 1]
 ```
 
 ### 3. Deploy daily pipeline and server
+
 To initialise the remaining resources, simply execute the following commands:
-```bash 
+
+```bash
 bash deploy-server.sh
 bash deploy-daily-pipeline.sh
 ```

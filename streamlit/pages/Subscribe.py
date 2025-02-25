@@ -7,6 +7,8 @@ from subscribe_functions import is_valid_email, create_client, create_contact
 
 def main():
     """Main function to run subscribe page."""
+    with open("style.css") as css:
+        st.html(f'<style>{css.read()}</style>')
     email_input = st.text_input("Enter your email here: ")
     if st.button("Subscribe to daily judgment emails"):
         if is_valid_email(email_input.strip()):

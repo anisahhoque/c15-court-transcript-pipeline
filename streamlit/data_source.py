@@ -62,7 +62,7 @@ def display_as_table(results: list) -> None:
     df.columns = [col.title() for col in df.columns]
 
     df = df.reset_index(drop=True)
-    st.subheader("New Daily Cases")
+    st.html("<h1>New Daily Cases")
     st.dataframe(df, hide_index=True, use_container_width=True, height=200)
 
 
@@ -82,7 +82,8 @@ def display_as_table_search(results: list) -> None:
     df.columns = [col.title() for col in df.columns]
 
     df = df.reset_index(drop=True)
-    st.subheader("Judgments")
+    st.html("<h1>Judgments")
+                        
     st.dataframe(df, hide_index=True, use_container_width=True, height=200)
 
 @st.cache_resource
@@ -113,13 +114,14 @@ def display_judgment(judgment_data:dict) -> None:
     judgment_date = judgment_data.get("judgment_date")
 
     if neutral_citation and judgment_summary:
-        st.subheader(f'Ref No. {neutral_citation}')
+        st.html(f'<h3>Ref No. {neutral_citation}')
         with st.expander("Read More"):
-            st.text(judgment_summary)
+            st.html(f'<p id="drop-down-summary">{judgment_summary}')
 
-        st.text(judgment_date)
+
+        st.html("<p>"+str(judgment_date))
     else:
-        st.write("No judgment found.")
+        st.html("<p>No judgment found.")
 
 def cases_over_time(conn: connection):
     query = """SELECT judgment_date, judgment_type, COUNT(*) AS judgment_count
@@ -131,11 +133,12 @@ def cases_over_time(conn: connection):
     with conn.cursor() as cursor:
         cursor.execute(query)
         df = pd.DataFrame(cursor.fetchall())
+        df["judgment_type"] = df["judgment_type"].str.title()
 
     chart = alt.Chart(df).mark_line().encode(
-        x='judgment_date:T',  # Use timestamp for x-axis
-        y='judgment_count:Q',  # Numeric value for y-axis (count of judgments)
-        color='judgment_type:N'  # Color the lines based on judgment_type
+        x=alt.X('judgment_date:T', title="Date"),  # Use timestamp for x-axis
+        y=alt.Y('judgment_count:Q', title="No. of Judgments"),  # Numeric value for y-axis (count of judgments)
+        color=alt.Color('judgment_type:N', title="Type of Judgment")  # Color the lines based on judgment_type
     ).properties(
         title="Judgment Types Over Time"
     )
@@ -262,11 +265,13 @@ def display_judgment_search(conn: connection, s_three_client: BaseClient) -> Non
     with conn.cursor() as cursor:
         cursor.execute(query)
         court_names = [row["court_name"].title() for row in cursor.fetchall()]
+    
+    court_names.sort()
 
     # "All" as a default option
     court_names.insert(0, "All")
 
-    court_filter = st.selectbox("Filter by Court", court_names)
+    court_filter = (st.selectbox("Filter by Court", court_names))
 
     if court_filter != "All":
         court_filter = court_filter.lower()
@@ -312,7 +317,7 @@ def display_judgment_search(conn: connection, s_three_client: BaseClient) -> Non
 
         selected_citation = st.selectbox(
             "Select a Judgment",
-            df["neutral_citation"], 
+            df["neutral_citation"],
             index=df["neutral_citation"].tolist().index(selected_citation_from_url) if selected_citation_from_url in df["neutral_citation"].values else 0
         )
 
@@ -332,18 +337,18 @@ def display_judgment_search(conn: connection, s_three_client: BaseClient) -> Non
                     case_overview = fetch_case_overview(conn, selected_citation)
 
                     if case_overview:
-                        st.write("### Case Overview")
-                        st.write(
-                            f"**Neutral Citation:** {case_overview.get('Neutral Citation')}")
-                        st.write(
-                            f"**Judgment Date:** {case_overview.get('Judgment Date')}")
-                        st.write(f"**Court:** {case_overview.get('Court')}")
-                        st.write(
-                            f"**Case Type:** {case_overview.get('Judgment Type')}")
-                        st.write(f"**Judge(s):** {case_overview.get('Judge')}")
-                        st.write(f"**In Favour of:** {case_overview.get('In Favour Of').title()}")
+                        st.html(
+                            f"""
+                            <h1>Case Overview</h1>
+                            <h2>Neutral Citation:<p>{case_overview.get('Neutral Citation')}</p1></h2>
+                            <h2>Judgment Date:<p>{case_overview.get('Judgment Date')}</p1></h2>
+                            <h2>Court:<p>{case_overview.get('Court')}</p></h2>
+                            <h2>Case Type:<p>{case_overview.get('Judgment Type')}</p1></h2>
+                            <h2>Judge(s):<p>{case_overview.get('Judge')}</p1></h2>
+                            <h2>In Favour of:<p>{case_overview.get('In Favour Of').title()}</p1></h2>
+                            """)
                     else:
-                        st.write("No detailed overview available.")
+                        st.html("<p>No detailed overview available.")
 
                 with col2:
                     # Fetch and display parties involved
@@ -351,28 +356,31 @@ def display_judgment_search(conn: connection, s_three_client: BaseClient) -> Non
                         conn, selected_citation)
 
                     if parties_involved:
-                        st.write("### Parties Involved")
+                        party_str_whole = "<h1>Parties Involved"
+                        
                         for role in parties_involved:
                             if len(parties_involved[role]) <= 1:
+                                parties_str = f"""<h2>{role.title()}:<ul>"""
                                 for party in parties_involved[role]:
-                                    st.write(f"#### {role.title()}")
-                                    st.write(f"- {party.title()}")
+                                    parties_str+=f"<li><p>{party.title()}"
+                                party_str_whole += parties_str
 
                             elif len(parties_involved[role]) > 1:
-                                st.write(f"#### {role}s")
+                                parties_str = f"""<h2>{role.title()}s:<ul>"""
                                 for party in parties_involved[role]:
-                                    st.write(f"- {party.title()}")
-
+                                    parties_str += f"<li><p>{party.title()}"
+                                party_str_whole += parties_str
+                        st.html(party_str_whole)
                     else:
-                        st.write("No party information available.")
+                        st.html("<p>No party information available.")
 
-                # Display the full judgment summary
-                judgment_summary = case_overview["Summary"]
-                st.write("### Full Judgment Summary")
-                st.write(judgment_summary)
+            # Display the full judgment summary
+
+                    judgment_summary = case_overview["Summary"]
+                    st.html(f"""<h1>Full Judgment Summary<p id="summary">{judgment_summary}""")
 
     else:
-        st.write("No results found for your search.")
+        st.html("<p>No results found for your search.")
 
 
 def fetch_case_overview(conn: connection, neutral_citation: str) -> dict:
