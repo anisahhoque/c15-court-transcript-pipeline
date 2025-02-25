@@ -37,4 +37,4 @@ jobs:
         docker tag judgment-reader-report-lambda ${REPORT_LAMBDA_ECR_URL}:latest
         docker push ${REPORT_LAMBDA_ECR_URL}:latest
         aws lambda update-function-code \
-          --function-name judgment-reader-report-lambda --image-uri ${REPORT_LAMBDA_ECR_URL}
+          --function-name judgment-reader-report --image-uri ${REPORT_LAMBDA_ECR_URL}:latest
