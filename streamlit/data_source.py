@@ -242,9 +242,9 @@ def fetch_judgment_html(neutral_citation: str, s_three_client: BaseClient) -> st
     file_key = ''.join(char for char in neutral_citation if char.isalnum() or char == " ")
     file_key = file_key.lower().split()
     if len(file_key) == 4:
-        file_key = '_'.join([file_key[1], file_key[3], file_key[0], file_key[2]])
+        file_key = '-'.join([file_key[1], file_key[3], file_key[0], file_key[2]])
     else:
-        file_key = '_'.join([file_key[1], file_key[0], file_key[2]])
+        file_key = '-'.join([file_key[1], file_key[0], file_key[2]])
     file_key += '.html'
     try:
         obj = s_three_client.get_object(Bucket=ENV['BUCKET_NAME'], Key=file_key)
