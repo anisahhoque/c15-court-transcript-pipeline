@@ -64,7 +64,7 @@ def get_case_summary(model: str, client: OpenAI, case: str) -> dict:
     - judgment_description: a summary of the judgment
     - parties: A list of all parties involved in the case, with the following details for each party:
         - name: The name of the party.
-        - role: The role of the party.
+        - role: The role of the party, must be singular.
         - counsels: A list of counsel(s) for the party, with the following details for each counsel:
             - name: The name of the counsel (e.g., "William Bennett KC").
             - title: The title of the counsel (e.g., "KC", "QC", or none).
