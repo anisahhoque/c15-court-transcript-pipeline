@@ -315,6 +315,7 @@ def display_judgment_search(conn: connection, s_three_client: BaseClient) -> Non
         query_params = st.query_params
         selected_citation_from_url = query_params.get("selected_citation", [None])
 
+        st.markdown('<a id="case-overview"></a>', unsafe_allow_html=True)
         selected_citation = st.selectbox(
             "Select a Judgment",
             df["neutral_citation"],
