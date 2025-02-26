@@ -1,11 +1,8 @@
 import pytest
 import logging
-from unittest.mock import mock_open, patch
-import unittest
+from unittest import mock, TestCase
 import os
-
 from bs4 import BeautifulSoup
-
 from daily_parse_xml import get_metadata, convert_judgment
 
 
@@ -57,9 +54,9 @@ from daily_parse_xml import get_metadata, convert_judgment
     ]
 )
 
-@patch("builtins.open", mock_open())
+@mock.patch("builtins.open", mock.mock_open())
 def test_get_metadata(xml_data, expected_metadata):
-    with patch("builtins.open", mock_open(read_data=xml_data)):
+    with mock.patch("builtins.open", mock.mock_open(read_data=xml_data)):
         metadata = get_metadata("test_case.xml")
     
     assert metadata == expected_metadata
@@ -69,7 +66,7 @@ def test_file_not_found(caplog):
 
     with caplog.at_level(logging.ERROR):
 
-        with patch('builtins.open', side_effect=FileNotFoundError):
+        with mock.patch('builtins.open', side_effect=FileNotFoundError):
             with pytest.raises(UnboundLocalError):  
                 get_metadata('nonexistent.xml')
     
@@ -77,7 +74,7 @@ def test_file_not_found(caplog):
     assert 'File was not found - nonexistent.xml' in caplog.text
 
 
-class TestConvertJudgment(unittest.TestCase):
+class TestConvertJudgment(TestCase):
 
     def setUp(self):
         self.html_folder_path = 'test_html_folder'
