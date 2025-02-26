@@ -4,4 +4,4 @@ docker build --platform linux/arm64 --provenance false -t judgment-reader-report
 docker tag judgment-reader-report-lambda ${REPORT_LAMBDA_ECR_URL}:latest
 docker push ${REPORT_LAMBDA_ECR_URL}:latest
 aws lambda update-function-code \
-          --function-name judgment-reader-report --image-uri ${REPORT_LAMBDA_ECR_URL}:latest
+  --function-name judgment-reader-report --image-uri ${REPORT_LAMBDA_ECR_URL}:latest

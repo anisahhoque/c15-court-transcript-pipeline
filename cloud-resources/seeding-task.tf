@@ -26,6 +26,9 @@ locals {
   )
 }
 
+/*
+Currently commented out due to ongoing issue with AWS
+
 resource "aws_security_group" "historical_pipeline" {
   name = "judgment-reader-historical-pipeline"
   vpc_id = aws_vpc.main.id
@@ -52,6 +55,7 @@ resource "aws_security_group" "historical_pipeline" {
     }
   }
 }
+*/
 
 resource "aws_ecs_task_definition" "historical_pipeline" {
   family = "judgment-reader-historical-pipeline"

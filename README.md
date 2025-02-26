@@ -54,3 +54,10 @@ To initialise the remaining resources, simply execute the following commands:
 bash deploy-server.sh
 bash deploy-daily-pipeline.sh
 ```
+
+## Dev Info
+### Architecture Diagram
+![Project architecture diagram](dev-resources/architecture/architecture-diagram.png)
+
+### Database organisation
+![Project Entity Relationship Diagram](dev-resources/erd/coloured_erd_v2.1.png)
